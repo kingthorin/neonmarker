@@ -40,34 +40,3 @@ zapAddOn {
         }
     }
 }
-
-System.getenv("GITHUB_REF")?.let { ref ->
-    if ("refs/tags/" !in ref) {
-        return@let
-    }
-
-    tasks.register<CreateGitHubRelease>("createReleaseFromGitHubRef") {
-        val targetTag = ref.removePrefix("refs/tags/")
-        val targetAddOnVersion = targetTag.removePrefix("v")
-
-        authToken.set(System.getenv("GITHUB_TOKEN"))
-        repo.set(System.getenv("GITHUB_REPOSITORY"))
-        tag.set(targetTag)
-
-        title.set(provider { "v${zapAddOn.addOnVersion.get()}" })
-        bodyFile.set(tasks.named<ExtractLatestChangesFromChangelog>("extractLatestChanges").flatMap { it.latestChanges })
-
-        assets {
-            register("add-on") {
-                file.set(tasks.named<Jar>(AddOnPlugin.JAR_ZAP_ADD_ON_TASK_NAME).flatMap { it.archiveFile })
-            }
-        }
-
-        doFirst {
-            val addOnVersion = zapAddOn.addOnVersion.get()
-            require(addOnVersion == targetAddOnVersion) {
-                "Version of the tag $targetAddOnVersion does not match the version of the add-on $addOnVersion"
-            }
-        }
-    }
-}
