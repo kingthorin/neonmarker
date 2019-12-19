@@ -1,19 +1,19 @@
 /*
  * Zed Attack Proxy (ZAP) and its related class files.
- * 
+ *
  * ZAP is an HTTP/HTTPS proxy for assessing web application security.
- * 
- * Licensed under the Apache License, Version 2.0 (the "License"); 
- * you may not use this file except in compliance with the License. 
- * You may obtain a copy of the License at 
- * 
- *   http://www.apache.org/licenses/LICENSE-2.0 
- *   
- * Unless required by applicable law or agreed to in writing, software 
- * distributed under the License is distributed on an "AS IS" BASIS, 
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
- * See the License for the specific language governing permissions and 
- * limitations under the License. 
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.zaproxy.zap.extension.neonmarker;
 
@@ -24,18 +24,18 @@ import org.jdesktop.swingx.decorator.HighlightPredicate;
 import org.parosproxy.paros.control.Control;
 import org.parosproxy.paros.extension.ExtensionAdaptor;
 import org.parosproxy.paros.extension.ExtensionHook;
-import org.parosproxy.paros.extension.ExtensionHookView;
 import org.parosproxy.paros.extension.history.ExtensionHistory;
 import org.parosproxy.paros.model.HistoryReference;
 import org.zaproxy.zap.extension.help.ExtensionHelp;
 import org.zaproxy.zap.view.table.DefaultHistoryReferencesTableModel;
 
-import java.awt.*;
-import java.util.*;
+import java.awt.Color;
+import java.awt.Component;
+import java.util.ArrayList;
 import java.util.List;
 
 public class ExtensionNeonmarker extends ExtensionAdaptor {
-    private static final Logger logger = Logger.getLogger(ExtensionNeonmarker.class);
+    private static final Logger LOGGER = Logger.getLogger(ExtensionNeonmarker.class);
     private ArrayList<ColorMapping> colormap;
     private NeonmarkerPanel neonmarkerPanel;
 
@@ -70,21 +70,33 @@ public class ExtensionNeonmarker extends ExtensionAdaptor {
     }
 
     public void hook(ExtensionHook extensionHook) {
-        ExtensionHistory extHistory = (ExtensionHistory) Control.getSingleton().getExtensionLoader().getExtension(ExtensionHistory.NAME);
+        ExtensionHistory extHistory = Control.getSingleton().getExtensionLoader().getExtension(ExtensionHistory.class);
         int idColumnIndex = extHistory.getHistoryReferencesTable().getModel().getColumnIndex(DefaultHistoryReferencesTableModel.Column.HREF_ID);
         extHistory.getHistoryReferencesTable().setHighlighters(new MarkItemColorHighlighter(extHistory, idColumnIndex));
 
         colormap = new ArrayList<>();
 
-        ExtensionHookView hookView = extensionHook.getHookView();
-        hookView.addWorkPanel(getNeonmarkerPanel());
+        if (getView() != null) {
+            extensionHook.getHookView().addWorkPanel(getNeonmarkerPanel());
+            ExtensionHelp.enableHelpKey(getNeonmarkerPanel(), "neonmarker");
+        }
 
-        ExtensionHelp.enableHelpKey(getNeonmarkerPanel(), "neonmarker");
+    }
+
+    @Override
+    public boolean canUnload() {
+        return true;
+    }
+
+    @Override
+    public void unload() {
+        super.unload();
+        neonmarkerPanel = null;
     }
 
     private NeonmarkerPanel getNeonmarkerPanel() {
         if (neonmarkerPanel == null) {
-            ExtensionHistory extHistory = (ExtensionHistory) Control.getSingleton().getExtensionLoader().getExtension(ExtensionHistory.NAME);
+            ExtensionHistory extHistory = Control.getSingleton().getExtensionLoader().getExtension(ExtensionHistory.class);
             neonmarkerPanel = new NeonmarkerPanel(extHistory.getModel(), colormap);
         }
         return neonmarkerPanel;
@@ -108,7 +120,7 @@ public class ExtensionNeonmarker extends ExtensionAdaptor {
             try {
                 tags = ref.getTags();
             } catch (Exception e) {
-                logger.error("Failed to fetch tags for history reference");
+                LOGGER.error("Failed to fetch tags for history reference");
                 return component;
             }
 
