@@ -6,15 +6,7 @@ import org.zaproxy.gradle.addon.misc.ExtractLatestChangesFromChangelog
 
 plugins {
     `java-library`
-    eclipse
     id("org.zaproxy.add-on") version "0.2.0"
-}
-
-eclipse {
-    classpath {
-        // Prevent compilation of zapHomeFiles.
-        sourceSets = listOf()
-    }
 }
 
 repositories {
@@ -30,7 +22,6 @@ java {
 }
 
 zapAddOn {
-    addOnId.set(project.name.replace("-", ""))
     addOnName.set("Neonmarker")
     addOnStatus.set(AddOnStatus.ALPHA)
     zapVersion.set("2.8.0")
