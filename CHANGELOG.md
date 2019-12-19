@@ -5,10 +5,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Changed
+- Migrated from https://github.com/juhakivekas/zap-extensions/tree/neonmarker/ to https://github.com/kingthorin/neonmarker. Moved to Gradle build.
+
+### Added
+- Basic help entry
 
 ## [1] - 2018-07-18
 
 Initial laser version.
 
-[Unreleased]: https://github.com/kingthorin/neonmarker/compare/v1...HEAD
+[Unreleased]: https://github.com/kingthorin/neonmarker/compare/e5d19ea50a3b8879c4e1e88fc36765635c2317de...HEAD
 [1]: https://github.com/juhakivekas/zap-extensions/releases/tag/1
