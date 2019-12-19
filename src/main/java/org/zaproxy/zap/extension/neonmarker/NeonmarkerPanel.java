@@ -16,6 +16,9 @@ import java.util.Collections;
 import java.util.List;
 
 class NeonmarkerPanel extends AbstractPanel {
+
+    private static final long serialVersionUID = 3053763855777533887L;
+
     private static final ImageIcon neonmarkerIcon;
     private Model historyTableModel;
     private ArrayList<ExtensionNeonmarker.ColorMapping> colormap;
@@ -234,6 +237,9 @@ class NeonmarkerPanel extends AbstractPanel {
      * Renderer for JComboBox that makes colours visible in the UI instead of handling them by name or value.
      */
     private class ColorListRenderer extends JLabel implements ListCellRenderer<Color> {
+
+        private static final long serialVersionUID = -5808258749585681496L;
+
         @Override
         public Component getListCellRendererComponent(JList<? extends Color> jList, Color color, int i, boolean b, boolean b1) {
             setText(" \u2588\u2588\u2588\u2588");

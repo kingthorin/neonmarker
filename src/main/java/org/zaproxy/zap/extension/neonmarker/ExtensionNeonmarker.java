@@ -27,6 +27,7 @@ import org.parosproxy.paros.extension.ExtensionHook;
 import org.parosproxy.paros.extension.ExtensionHookView;
 import org.parosproxy.paros.extension.history.ExtensionHistory;
 import org.parosproxy.paros.model.HistoryReference;
+import org.zaproxy.zap.extension.help.ExtensionHelp;
 import org.zaproxy.zap.view.table.DefaultHistoryReferencesTableModel;
 
 import java.awt.*;
@@ -77,6 +78,8 @@ public class ExtensionNeonmarker extends ExtensionAdaptor {
 
         ExtensionHookView hookView = extensionHook.getHookView();
         hookView.addWorkPanel(getNeonmarkerPanel());
+
+        ExtensionHelp.enableHelpKey(getNeonmarkerPanel(), "neonmarker");
     }
 
     private NeonmarkerPanel getNeonmarkerPanel() {
