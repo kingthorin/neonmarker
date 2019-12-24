@@ -18,7 +18,9 @@
 package org.zaproxy.zap.extension.neonmarker;
 
 import org.parosproxy.paros.Constant;
+import org.parosproxy.paros.control.Control;
 import org.parosproxy.paros.extension.AbstractPanel;
+import org.parosproxy.paros.extension.history.ExtensionHistory;
 import org.parosproxy.paros.model.Model;
 
 import javax.swing.ComboBoxModel;
@@ -122,7 +124,7 @@ class NeonmarkerPanel extends AbstractPanel {
         rebuildRows();
     }
 
-    private void rebuildRows() {
+    protected void rebuildRows() {
         colorSelectionPanel.removeAll();
         GridBagConstraints c = new GridBagConstraints();
         c.anchor = GridBagConstraints.LINE_START;
@@ -146,6 +148,8 @@ class NeonmarkerPanel extends AbstractPanel {
         colorSelectionPanel.add(new JLabel(" "), c);
         colorSelectionPanel.validate();
         colorSelectionPanel.repaint();
+        Control.getSingleton().getExtensionLoader().getExtension(ExtensionHistory.class)
+                .getHistoryReferencesTable().repaint();
     }
 
     private Component getMoveButton(int ruleNumber, boolean up) {

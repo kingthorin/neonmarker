@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.zaproxy.zap.extension.neonmarker;
 
 import org.apache.commons.lang3.Range;
@@ -41,7 +42,8 @@ import java.util.List;
 
 public class ExtensionNeonmarker extends ExtensionAdaptor {
     private static final Logger LOGGER = Logger.getLogger(ExtensionNeonmarker.class);
-    private static final Range<Integer> INT_RANGE = Range.between(Integer.MIN_VALUE, Integer.MAX_VALUE);
+    private static final Range<Integer> INT_RANGE = Range.between(Integer.MIN_VALUE,
+            Integer.MAX_VALUE);
     private static final List<Class<? extends Extension>> EXTENSION_DEPENDENCIES;
 
     static {
@@ -56,7 +58,7 @@ public class ExtensionNeonmarker extends ExtensionAdaptor {
     private MarkItemColorHighlighter highlighter = null;
 
     static Color[] palette = {
-            //RAINBOW HACKER THEME
+            // RAINBOW HACKER THEME
             new Color(0xff8080),
             new Color(0xffc080),
             new Color(0xffff80),
@@ -69,7 +71,7 @@ public class ExtensionNeonmarker extends ExtensionAdaptor {
             new Color(0xc080ff),
             new Color(0xff80ff),
             new Color(0xff80c0),
-            //CORPORATE EDITION
+            // CORPORATE EDITION
             new Color(0xe0ffff),
             new Color(0xa8c0c0),
             new Color(0x708080),
@@ -81,9 +83,10 @@ public class ExtensionNeonmarker extends ExtensionAdaptor {
     }
 
     public void hook(ExtensionHook extensionHook) {
-        ExtensionHistory extHistory = Control.getSingleton().getExtensionLoader().getExtension(ExtensionHistory.class);
-        int idColumnIndex = extHistory.getHistoryReferencesTable().getModel().getColumnIndex(DefaultHistoryReferencesTableModel.Column.HREF_ID);
-        extHistory.getHistoryReferencesTable().setHighlighters(new MarkItemColorHighlighter(extHistory, idColumnIndex));
+        int idColumnIndex = getHistoryExtension().getHistoryReferencesTable().getModel()
+                .getColumnIndex(DefaultHistoryReferencesTableModel.Column.HREF_ID);
+        getHistoryExtension().getHistoryReferencesTable().setHighlighters(
+                new MarkItemColorHighlighter(getHistoryExtension(), idColumnIndex));
 
         colormap = new ArrayList<>();
 
@@ -146,11 +149,14 @@ public class ExtensionNeonmarker extends ExtensionAdaptor {
      *
      * @param tag the name of the tag to be mapped.
      * @param color the {@code int} representation of the color to be mapped
-     * @return whether or not the addition of the color mapping was successful ({@code true} if it was, {@code false} otherwise).
+     * @return whether or not the addition of the color mapping was successful ({@code true} if it
+     *         was, {@code false} otherwise).
      */
     public boolean addColorMapping(String tag, int color) {
         if (isValidTag(tag) && isValidColor(color)) {
             getColorMap().add(new ColorMapping(tag, new Color(color)));
+            getNeonmarkerPanel().rebuildRows();
+            getHistoryExtension().getHistoryReferencesTable().repaint();
             return true;
         }
         return false;
@@ -162,7 +168,8 @@ public class ExtensionNeonmarker extends ExtensionAdaptor {
 
     private boolean isValidTag(String tag) {
         try {
-            return getHistoryExtension().getModel().getDb().getTableTag().getAllTags().contains(tag);
+            return getHistoryExtension().getModel().getDb().getTableTag().getAllTags()
+                    .contains(tag);
         } catch (DatabaseException e) {
             LOGGER.debug("Couldn't get tags from DB.");
             return false;
@@ -186,7 +193,8 @@ public class ExtensionNeonmarker extends ExtensionAdaptor {
 
         @Override
         protected Component doHighlight(Component component, ComponentAdapter adapter) {
-            HistoryReference ref = extHistory.getHistoryReference((int) adapter.getValue(idColumnIndex));
+            HistoryReference ref = extHistory
+                    .getHistoryReference((int) adapter.getValue(idColumnIndex));
             List<String> tags;
             try {
                 tags = ref.getTags();
@@ -216,7 +224,7 @@ public class ExtensionNeonmarker extends ExtensionAdaptor {
         public String tag;
         public Color color;
 
-        ColorMapping(){
+        ColorMapping() {
             this.tag = null;
             this.color = palette[0];
         }
