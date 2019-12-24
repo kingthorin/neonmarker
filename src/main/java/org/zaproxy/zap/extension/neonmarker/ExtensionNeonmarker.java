@@ -17,11 +17,14 @@
  */
 package org.zaproxy.zap.extension.neonmarker;
 
+import org.apache.commons.lang3.Range;
 import org.apache.log4j.Logger;
 import org.jdesktop.swingx.decorator.AbstractHighlighter;
 import org.jdesktop.swingx.decorator.ComponentAdapter;
 import org.jdesktop.swingx.decorator.HighlightPredicate;
+import org.parosproxy.paros.Constant;
 import org.parosproxy.paros.control.Control;
+import org.parosproxy.paros.db.DatabaseException;
 import org.parosproxy.paros.extension.ExtensionAdaptor;
 import org.parosproxy.paros.extension.ExtensionHook;
 import org.parosproxy.paros.extension.history.ExtensionHistory;
@@ -36,6 +39,8 @@ import java.util.List;
 
 public class ExtensionNeonmarker extends ExtensionAdaptor {
     private static final Logger LOGGER = Logger.getLogger(ExtensionNeonmarker.class);
+    private static final Range<Integer> INT_RANGE = Range.between(Integer.MIN_VALUE, Integer.MAX_VALUE);
+    public static final String NAME = "ExtensionNeonmarker";
     private ArrayList<ColorMapping> colormap;
     private NeonmarkerPanel neonmarkerPanel;
 
@@ -94,12 +99,52 @@ public class ExtensionNeonmarker extends ExtensionAdaptor {
         neonmarkerPanel = null;
     }
 
+    @Override
+    public String getUIName() {
+        return Constant.messages.getString("neonmarker.name");
+    }
+
     private NeonmarkerPanel getNeonmarkerPanel() {
         if (neonmarkerPanel == null) {
-            ExtensionHistory extHistory = Control.getSingleton().getExtensionLoader().getExtension(ExtensionHistory.class);
-            neonmarkerPanel = new NeonmarkerPanel(extHistory.getModel(), colormap);
+            neonmarkerPanel = new NeonmarkerPanel(getHistoryExtension().getModel(), colormap);
         }
         return neonmarkerPanel;
+    }
+
+    private ExtensionHistory getHistoryExtension() {
+        return Control.getSingleton().getExtensionLoader().getExtension(ExtensionHistory.class);
+    }
+
+    /**
+     * Allows the addition of a color mapping between a {@code Color} and passive scan Tag.
+     *
+     * @param tag the name of the tag to be mapped.
+     * @param color the {@code int} representation of the color to be mapped
+     * @return whether or not the addition of the color mapping was successful ({@code true} if it was, {@code false} otherwise).
+     */
+    public boolean addColorMapping(String tag, int color) {
+        if (isValidTag(tag) && isValidColor(color)) {
+            getColorMap().add(new ColorMapping(tag, new Color(color)));
+            return true;
+        }
+        return false;
+    }
+
+    private boolean isValidColor(int colorValue) {
+        return INT_RANGE.contains(colorValue);
+    }
+
+    private boolean isValidTag(String tag) {
+        try {
+            return getHistoryExtension().getModel().getDb().getTableTag().getAllTags().contains(tag);
+        } catch (DatabaseException e) {
+            LOGGER.debug("Couldn't get tags from DB.");
+            return false;
+        }
+    }
+
+    private List<ColorMapping> getColorMap() {
+        return colormap;
     }
 
     private class MarkItemColorHighlighter extends AbstractHighlighter {
@@ -148,6 +193,11 @@ public class ExtensionNeonmarker extends ExtensionAdaptor {
         ColorMapping(){
             this.tag = null;
             this.color = palette[0];
+        }
+
+        ColorMapping(String tag, Color color) {
+            this.tag = tag;
+            this.color = color;
         }
     }
 }

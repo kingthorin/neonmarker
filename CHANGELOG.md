@@ -6,10 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
 ### Changed
-- Migrated from https://github.com/juhakivekas/zap-extensions/tree/neonmarker/ to https://github.com/kingthorin/neonmarker. Moved to Gradle build.
+- Migrated from https://github.com/juhakivekas/zap-extensions/tree/neonmarker/ to https://github.com/kingthorin/neonmarker.
+- Adapted to Gradle build.
 
 ### Added
-- Basic help entry
+- Basic help entry.
 
 ## [1] - 2018-07-18
 
