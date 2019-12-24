@@ -25,6 +25,7 @@ import org.jdesktop.swingx.decorator.HighlightPredicate;
 import org.parosproxy.paros.Constant;
 import org.parosproxy.paros.control.Control;
 import org.parosproxy.paros.db.DatabaseException;
+import org.parosproxy.paros.extension.Extension;
 import org.parosproxy.paros.extension.ExtensionAdaptor;
 import org.parosproxy.paros.extension.ExtensionHook;
 import org.parosproxy.paros.extension.history.ExtensionHistory;
@@ -35,14 +36,24 @@ import org.zaproxy.zap.view.table.DefaultHistoryReferencesTableModel;
 import java.awt.Color;
 import java.awt.Component;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class ExtensionNeonmarker extends ExtensionAdaptor {
     private static final Logger LOGGER = Logger.getLogger(ExtensionNeonmarker.class);
     private static final Range<Integer> INT_RANGE = Range.between(Integer.MIN_VALUE, Integer.MAX_VALUE);
+    private static final List<Class<? extends Extension>> EXTENSION_DEPENDENCIES;
+
+    static {
+        List<Class<? extends Extension>> dependencies = new ArrayList<>(1);
+        dependencies.add(ExtensionHistory.class);
+        EXTENSION_DEPENDENCIES = Collections.unmodifiableList(dependencies);
+    }
+
     public static final String NAME = "ExtensionNeonmarker";
     private ArrayList<ColorMapping> colormap;
     private NeonmarkerPanel neonmarkerPanel;
+    private MarkItemColorHighlighter highlighter = null;
 
     static Color[] palette = {
             //RAINBOW HACKER THEME
@@ -65,13 +76,8 @@ public class ExtensionNeonmarker extends ExtensionAdaptor {
             new Color(0x384040)
     };
 
-    @Override
-    public String getAuthor() {
-        return "Juha Kivekäs";
-    }
-
     public ExtensionNeonmarker() {
-        super();
+        super(NAME);
     }
 
     public void hook(ExtensionHook extensionHook) {
@@ -89,6 +95,11 @@ public class ExtensionNeonmarker extends ExtensionAdaptor {
     }
 
     @Override
+    public List<Class<? extends Extension>> getDependencies() {
+        return EXTENSION_DEPENDENCIES;
+    }
+
+    @Override
     public boolean canUnload() {
         return true;
     }
@@ -97,11 +108,17 @@ public class ExtensionNeonmarker extends ExtensionAdaptor {
     public void unload() {
         super.unload();
         neonmarkerPanel = null;
+        getHistoryExtension().getHistoryReferencesTable().removeHighlighter(getHighligher());
     }
 
     @Override
     public String getUIName() {
         return Constant.messages.getString("neonmarker.name");
+    }
+
+    @Override
+    public String getAuthor() {
+        return "Juha Kivekäs, Kingthorin";
     }
 
     private NeonmarkerPanel getNeonmarkerPanel() {
@@ -113,6 +130,15 @@ public class ExtensionNeonmarker extends ExtensionAdaptor {
 
     private ExtensionHistory getHistoryExtension() {
         return Control.getSingleton().getExtensionLoader().getExtension(ExtensionHistory.class);
+    }
+
+    private MarkItemColorHighlighter getHighligher() {
+        if (highlighter == null) {
+            int idColumnIndex = getHistoryExtension().getHistoryReferencesTable().getModel()
+                    .getColumnIndex(DefaultHistoryReferencesTableModel.Column.HREF_ID);
+            highlighter = new MarkItemColorHighlighter(getHistoryExtension(), idColumnIndex);
+        }
+        return highlighter;
     }
 
     /**
