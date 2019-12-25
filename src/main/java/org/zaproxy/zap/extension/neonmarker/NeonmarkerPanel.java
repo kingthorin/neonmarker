@@ -112,7 +112,7 @@ class NeonmarkerPanel extends AbstractPanel {
             addButton.setToolTipText(Constant.messages.getString("neonmarker.panel.button.add"));
             addButton.addActionListener(actionEvent -> {
                 colormap.add(new ExtensionNeonmarker.ColorMapping());
-                rebuildRows();
+                refreshDisplay();
             });
         }
         return addButton;
@@ -121,10 +121,10 @@ class NeonmarkerPanel extends AbstractPanel {
     private void clearColorSelectionPanel() {
         colormap.clear();
         colormap.add(new ExtensionNeonmarker.ColorMapping());
-        rebuildRows();
+        refreshDisplay();
     }
 
-    protected void rebuildRows() {
+    protected void refreshDisplay() {
         colorSelectionPanel.removeAll();
         GridBagConstraints c = new GridBagConstraints();
         c.anchor = GridBagConstraints.LINE_START;
@@ -161,7 +161,7 @@ class NeonmarkerPanel extends AbstractPanel {
         move.setToolTipText(Constant.messages.getString("neonmarker.panel.mapping.move"));
         move.addActionListener(e -> {
             Collections.swap(colormap, ruleNumber, up ? ruleNumber - 1 : ruleNumber + 1);
-            rebuildRows();
+            refreshDisplay();
         });
         return move;
     }
@@ -204,7 +204,7 @@ class NeonmarkerPanel extends AbstractPanel {
         remove.addActionListener(e -> {
             if (colormap.size() <= 1) return;
             colormap.remove(ruleNumber);
-            rebuildRows();
+            refreshDisplay();
         });
         return remove;
     }

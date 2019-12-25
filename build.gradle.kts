@@ -30,7 +30,7 @@ zapAddOn {
     unreleasedLink.set("https://github.com/kingthorin/neonmarker/compare/v@CURRENT_VERSION@...HEAD")
 
     manifest {
-        author.set("Juha Kivekäs, kingthorin")
+        author.set("Juha Kivekäs, Kingthorin")
         url.set("https://github.com/kingthorin/neonmarker")
         changesFile.set(tasks.named<ConvertMarkdownToHtml>("generateManifestChanges").flatMap { it.html })
 

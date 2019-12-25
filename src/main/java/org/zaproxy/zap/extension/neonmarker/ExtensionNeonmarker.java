@@ -83,10 +83,7 @@ public class ExtensionNeonmarker extends ExtensionAdaptor {
     }
 
     public void hook(ExtensionHook extensionHook) {
-        int idColumnIndex = getHistoryExtension().getHistoryReferencesTable().getModel()
-                .getColumnIndex(DefaultHistoryReferencesTableModel.Column.HREF_ID);
-        getHistoryExtension().getHistoryReferencesTable().setHighlighters(
-                new MarkItemColorHighlighter(getHistoryExtension(), idColumnIndex));
+        getHistoryExtension().getHistoryReferencesTable().setHighlighters(getHighligher());
 
         colormap = new ArrayList<>();
 
@@ -109,9 +106,10 @@ public class ExtensionNeonmarker extends ExtensionAdaptor {
 
     @Override
     public void unload() {
-        super.unload();
+        Control.getSingleton().getExtensionLoader().removeWorkPanel(getNeonmarkerPanel());
         neonmarkerPanel = null;
         getHistoryExtension().getHistoryReferencesTable().removeHighlighter(getHighligher());
+        super.unload();
     }
 
     @Override
@@ -155,8 +153,7 @@ public class ExtensionNeonmarker extends ExtensionAdaptor {
     public boolean addColorMapping(String tag, int color) {
         if (isValidTag(tag) && isValidColor(color)) {
             getColorMap().add(new ColorMapping(tag, new Color(color)));
-            getNeonmarkerPanel().rebuildRows();
-            getHistoryExtension().getHistoryReferencesTable().repaint();
+            getNeonmarkerPanel().refreshDisplay();
             return true;
         }
         return false;

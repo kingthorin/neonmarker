@@ -11,6 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 - Basic help entry.
+- Color Mappings can be added in scripts.
 
 ## [1] - 2018-07-18
 
