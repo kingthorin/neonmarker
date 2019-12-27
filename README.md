@@ -1,5 +1,10 @@
 # Neonmarker
 
+Continuation of the Zaproxy Neonmarker addon by @juhakivekas.
+
+Neonmarker is a @Zaproxy addon which facilitates colouring of History table entries based on the Tags that have been applied to them 
+(either by the Passive scanner or manually).
+
 ## Backlog/TODO
 
 ### Order of tag rules can be dynamically changed in UI
