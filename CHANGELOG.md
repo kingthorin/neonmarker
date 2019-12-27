@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 - Migrated from https://github.com/juhakivekas/zap-extensions/tree/neonmarker/ to https://github.com/kingthorin/neonmarker.
 - Adapted to Gradle build.
+- Mapping 'rules' now display all available Tags not just those currently mapped to a history item.
 
 ### Added
 - Basic help entry.

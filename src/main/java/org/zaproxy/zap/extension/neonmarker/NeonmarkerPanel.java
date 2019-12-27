@@ -22,6 +22,7 @@ import org.parosproxy.paros.control.Control;
 import org.parosproxy.paros.extension.AbstractPanel;
 import org.parosproxy.paros.extension.history.ExtensionHistory;
 import org.parosproxy.paros.model.Model;
+import org.zaproxy.zap.extension.pscan.PassiveScanParam;
 
 import javax.swing.ComboBoxModel;
 import javax.swing.ImageIcon;
@@ -228,6 +229,12 @@ class NeonmarkerPanel extends AbstractPanel {
             } catch (Exception e) {
                 //do nothing
             }
+            Model.getSingleton().getOptionsParam().getParamSet(PassiveScanParam.class)
+                    .getAutoTagScanners().forEach((tagger) -> {
+                        if (!allTags.contains(tagger.getConf())) {
+                            allTags.add(tagger.getConf());
+                        }
+                    });
             if (allTags.isEmpty()) {
                 allTags.add(Constant.messages.getString("neonmarker.panel.mapping.notags"));
             }
