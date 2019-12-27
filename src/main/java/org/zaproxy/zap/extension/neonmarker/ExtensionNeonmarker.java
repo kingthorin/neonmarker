@@ -106,7 +106,6 @@ public class ExtensionNeonmarker extends ExtensionAdaptor {
 
     @Override
     public void unload() {
-        Control.getSingleton().getExtensionLoader().removeWorkPanel(getNeonmarkerPanel());
         neonmarkerPanel = null;
         getHistoryExtension().getHistoryReferencesTable().removeHighlighter(getHighligher());
         super.unload();
