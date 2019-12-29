@@ -31,7 +31,9 @@ import org.parosproxy.paros.extension.ExtensionAdaptor;
 import org.parosproxy.paros.extension.ExtensionHook;
 import org.parosproxy.paros.extension.history.ExtensionHistory;
 import org.parosproxy.paros.model.HistoryReference;
+import org.parosproxy.paros.model.Model;
 import org.zaproxy.zap.extension.help.ExtensionHelp;
+import org.zaproxy.zap.extension.pscan.PassiveScanParam;
 import org.zaproxy.zap.view.table.DefaultHistoryReferencesTableModel;
 
 import java.awt.Color;
@@ -160,6 +162,10 @@ public class ExtensionNeonmarker extends ExtensionAdaptor {
             getNeonmarkerPanel().refreshDisplay();
             return true;
         }
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug(
+                    "Either the tag: \"" + tag + "\" or the color: \"" + color + " was invalid.");
+        }
         return false;
     }
 
@@ -179,8 +185,12 @@ public class ExtensionNeonmarker extends ExtensionAdaptor {
 
     private boolean isValidTag(String tag) {
         try {
-            return getHistoryExtension().getModel().getDb().getTableTag().getAllTags()
-                    .contains(tag);
+            List<String> tags = new ArrayList<>();
+            Model.getSingleton().getOptionsParam().getParamSet(PassiveScanParam.class)
+                    .getAutoTagScanners().forEach(tagger -> tags.add(tagger.getConf()));
+            return tags.contains(tag)
+                    || getHistoryExtension().getModel().getDb().getTableTag().getAllTags()
+                            .contains(tag);
         } catch (DatabaseException e) {
             LOGGER.debug("Couldn't get tags from DB.");
             return false;
