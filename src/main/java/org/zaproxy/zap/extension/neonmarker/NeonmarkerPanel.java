@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.zaproxy.zap.extension.neonmarker;
 
 import org.parosproxy.paros.Constant;
@@ -61,7 +62,8 @@ class NeonmarkerPanel extends AbstractPanel {
     private JButton clearButton, addButton;
 
     static {
-        neonmarkerIcon = new ImageIcon(NeonmarkerPanel.class.getResource("/org/zaproxy/zap/extension/neonmarker/resources/spectrum.png"));
+        neonmarkerIcon = new ImageIcon(NeonmarkerPanel.class
+                .getResource("/org/zaproxy/zap/extension/neonmarker/resources/spectrum.png"));
     }
 
     NeonmarkerPanel(Model model, ArrayList<ExtensionNeonmarker.ColorMapping> colormap) {
@@ -98,8 +100,10 @@ class NeonmarkerPanel extends AbstractPanel {
         if (clearButton == null) {
             clearButton = new JButton();
             clearButton.setEnabled(true);
-            clearButton.setIcon(new ImageIcon(NeonmarkerPanel.class.getResource("/resource/icon/fugue/broom.png")));
-            clearButton.setToolTipText(Constant.messages.getString("neonmarker.panel.button.clear"));
+            clearButton.setIcon(new ImageIcon(
+                    NeonmarkerPanel.class.getResource("/resource/icon/fugue/broom.png")));
+            clearButton
+                    .setToolTipText(Constant.messages.getString("neonmarker.panel.button.clear"));
             clearButton.addActionListener(actionEvent -> clearColorSelectionPanel());
         }
         return clearButton;
@@ -109,7 +113,8 @@ class NeonmarkerPanel extends AbstractPanel {
         if (addButton == null) {
             addButton = new JButton();
             addButton.setEnabled(true);
-            addButton.setIcon(new ImageIcon(NeonmarkerPanel.class.getResource("/resource/icon/16/103.png")));
+            addButton.setIcon(
+                    new ImageIcon(NeonmarkerPanel.class.getResource("/resource/icon/16/103.png")));
             addButton.setToolTipText(Constant.messages.getString("neonmarker.panel.button.add"));
             addButton.addActionListener(actionEvent -> {
                 colormap.add(new ExtensionNeonmarker.ColorMapping());
@@ -131,7 +136,7 @@ class NeonmarkerPanel extends AbstractPanel {
         c.anchor = GridBagConstraints.LINE_START;
         c.fill = GridBagConstraints.VERTICAL;
         c.gridy = 0;
-        for(ExtensionNeonmarker.ColorMapping rule: colormap){
+        for (ExtensionNeonmarker.ColorMapping rule : colormap) {
             c.gridx = 0;
             colorSelectionPanel.add(getColorComboBox(rule), c);
             c.gridx++;
@@ -149,13 +154,12 @@ class NeonmarkerPanel extends AbstractPanel {
         colorSelectionPanel.add(new JLabel(" "), c);
         colorSelectionPanel.validate();
         colorSelectionPanel.repaint();
-        Control.getSingleton().getExtensionLoader().getExtension(ExtensionHistory.class)
-                .getHistoryReferencesTable().repaint();
+        repaintHistoryTable();
     }
 
     private Component getMoveButton(int ruleNumber, boolean up) {
         JButton move = new JButton(up ? "\u2191" : "\u2193");
-        if((up && ruleNumber == 0) || (!up && ruleNumber == colormap.size() - 1)) {
+        if ((up && ruleNumber == 0) || (!up && ruleNumber == colormap.size() - 1)) {
             move.setEnabled(false);
         }
         move.setActionCommand(up ? "up" : "down");
@@ -172,7 +176,10 @@ class NeonmarkerPanel extends AbstractPanel {
         colorSelect = new JComboBox<>(ExtensionNeonmarker.palette);
         colorSelect.setRenderer(new ColorListRenderer());
         colorSelect.setSelectedItem(rule.color);
-        colorSelect.addActionListener(actionEvent -> rule.color = (Color) colorSelect.getSelectedItem());
+        colorSelect.addActionListener(actionEvent -> {
+            rule.color = (Color) colorSelect.getSelectedItem();
+            repaintHistoryTable();
+        });
         return colorSelect;
     }
 
@@ -193,9 +200,17 @@ class NeonmarkerPanel extends AbstractPanel {
             public void popupMenuCanceled(PopupMenuEvent popupMenuEvent) {
             }
         });
-        tagSelect.addActionListener(actionEvent -> rule.tag = (String) tagSelect.getSelectedItem());
+        tagSelect.addActionListener(actionEvent -> {
+            rule.tag = (String) tagSelect.getSelectedItem();
+            repaintHistoryTable();
+        });
         tagSelect.setSelectedItem(rule.tag);
         return tagSelect;
+    }
+
+    private void repaintHistoryTable() {
+        Control.getSingleton().getExtensionLoader().getExtension(ExtensionHistory.class)
+                .getHistoryReferencesTable().repaint();
     }
 
     private Component getRemoveButton(int ruleNumber) {
@@ -203,7 +218,8 @@ class NeonmarkerPanel extends AbstractPanel {
         remove.setToolTipText(Constant.messages.getString("neonmarker.panel.mapping.remove"));
         remove.setActionCommand("remove");
         remove.addActionListener(e -> {
-            if (colormap.size() <= 1) return;
+            if (colormap.size() <= 1)
+                return;
             colormap.remove(ruleNumber);
             refreshDisplay();
         });
@@ -211,7 +227,8 @@ class NeonmarkerPanel extends AbstractPanel {
     }
 
     /**
-     * A list model that dynamically gets all the tags that ZAP has given to any messages in the history
+     * A list model that dynamically gets all the tags that ZAP has given to any messages in the
+     * history
      */
     private class TagListModel implements ComboBoxModel<String> {
         private List<String> allTags;
@@ -227,7 +244,7 @@ class NeonmarkerPanel extends AbstractPanel {
             try {
                 allTags = historyTableModel.getDb().getTableTag().getAllTags();
             } catch (Exception e) {
-                //do nothing
+                // do nothing
             }
             Model.getSingleton().getOptionsParam().getParamSet(PassiveScanParam.class)
                     .getAutoTagScanners().forEach((tagger) -> {
@@ -239,7 +256,8 @@ class NeonmarkerPanel extends AbstractPanel {
                 allTags.add(Constant.messages.getString("neonmarker.panel.mapping.notags"));
             }
             for (ListDataListener l : listDataListeners) {
-                l.contentsChanged(new ListDataEvent(this, ListDataEvent.CONTENTS_CHANGED, 0, allTags.size() - 1));
+                l.contentsChanged(new ListDataEvent(this, ListDataEvent.CONTENTS_CHANGED, 0,
+                        allTags.size() - 1));
             }
         }
 
@@ -274,25 +292,25 @@ class NeonmarkerPanel extends AbstractPanel {
         }
     }
 
-
     /**
-     * Renderer for JComboBox that makes colours visible in the UI instead of handling them by name or value.
+     * Renderer for JComboBox that makes colours visible in the UI instead of handling them by name
+     * or value.
      */
     private class ColorListRenderer extends JLabel implements ListCellRenderer<Color> {
 
         private static final long serialVersionUID = -5808258749585681496L;
 
         @Override
-        public Component getListCellRendererComponent(JList<? extends Color> jList, Color color, int i, boolean b, boolean b1) {
+        public Component getListCellRendererComponent(JList<? extends Color> jList, Color color,
+                int i, boolean b, boolean b1) {
             setText(" \u2588\u2588\u2588\u2588");
             setForeground(color);
-            /* If the hack above some day fails, here's a worse-looking more-correct solution
-            BufferedImage img = new BufferedImage(100, 20, BufferedImage.TYPE_INT_RGB);
-            Graphics graphics = img.createGraphics();
-            graphics.setColor(color);
-            graphics.fillRect(0, 0, img.getWidth(), img.getHeight());
-            setIcon(new ImageIcon(img));
-            */
+            /*
+             * If the hack above some day fails, here's a worse-looking more-correct solution
+             * BufferedImage img = new BufferedImage(100, 20, BufferedImage.TYPE_INT_RGB); Graphics
+             * graphics = img.createGraphics(); graphics.setColor(color); graphics.fillRect(0, 0,
+             * img.getWidth(), img.getHeight()); setIcon(new ImageIcon(img));
+             */
             return this;
         }
     }

@@ -37,6 +37,7 @@ import org.zaproxy.zap.view.table.DefaultHistoryReferencesTableModel;
 import java.awt.Color;
 import java.awt.Component;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -151,11 +152,25 @@ public class ExtensionNeonmarker extends ExtensionAdaptor {
      */
     public boolean addColorMapping(String tag, int color) {
         if (isValidTag(tag) && isValidColor(color)) {
-            getColorMap().add(new ColorMapping(tag, new Color(color)));
+            Color newColor = new Color(color);
+            getColorMap().add(new ColorMapping(tag, newColor));
+            if (!Arrays.asList(palette).contains(newColor)) {
+                palette = addToPalette(newColor);
+            }
             getNeonmarkerPanel().refreshDisplay();
             return true;
         }
         return false;
+    }
+
+    public Color[] addToPalette(Color addColor) {
+        Color[] newPalette = new Color[palette.length + 1];
+        int idx;
+        for (idx = 0; idx < palette.length; idx++) {
+            newPalette[idx] = palette[idx];
+        }
+        newPalette[newPalette.length - 1] = addColor;
+        return newPalette;
     }
 
     private boolean isValidColor(int colorValue) {
