@@ -28,6 +28,7 @@ import org.zaproxy.zap.extension.pscan.PassiveScanParam;
 import javax.swing.ComboBoxModel;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JColorChooser;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JList;
@@ -47,6 +48,7 @@ import java.awt.Container;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -175,12 +177,28 @@ class NeonmarkerPanel extends AbstractPanel {
         JComboBox<Color> colorSelect;
         colorSelect = new JComboBox<>(ExtensionNeonmarker.palette);
         colorSelect.setRenderer(new ColorListRenderer());
-        colorSelect.setSelectedItem(rule.color);
+        colorSelect.setSelectedItem(
+                isOnPalette(rule.color) ? rule.color : ExtensionNeonmarker.PLACEHOLDER);
         colorSelect.addActionListener(actionEvent -> {
-            rule.color = (Color) colorSelect.getSelectedItem();
+            if (((Color) colorSelect.getSelectedItem()).equals(ExtensionNeonmarker.PLACEHOLDER)) {
+                rule.color = JColorChooser.showDialog(this,
+                        Constant.messages.getString("neonmarker.panel.color.chooser.title"),
+                        Color.WHITE);
+            } else {
+                rule.color = (Color) colorSelect.getSelectedItem();
+            }
             repaintHistoryTable();
         });
         return colorSelect;
+    }
+
+    private boolean isOnPalette(Color color) {
+        for (Color clr : Arrays.asList(ExtensionNeonmarker.palette)) {
+            if (clr.equals(color)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private Component getTagComboBox(ExtensionNeonmarker.ColorMapping rule) {
@@ -296,15 +314,20 @@ class NeonmarkerPanel extends AbstractPanel {
      * Renderer for JComboBox that makes colours visible in the UI instead of handling them by name
      * or value.
      */
-    private class ColorListRenderer extends JLabel implements ListCellRenderer<Color> {
+    private class ColorListRenderer extends JLabel implements ListCellRenderer<Object> {
 
         private static final long serialVersionUID = -5808258749585681496L;
 
         @Override
-        public Component getListCellRendererComponent(JList<? extends Color> jList, Color color,
+        public Component getListCellRendererComponent(JList<?> jList, Object entry,
                 int i, boolean b, boolean b1) {
-            setText(" \u2588\u2588\u2588\u2588");
-            setForeground(color);
+            if (((Color) entry).equals(ExtensionNeonmarker.PLACEHOLDER)) {
+                setText(Constant.messages.getString("neonmarker.panel.color.menu.custom.label"));
+                setForeground(Color.BLACK);
+            } else {
+                setText(" \u2588\u2588\u2588\u2588");
+                setForeground((Color) entry);
+            }
             /*
              * If the hack above some day fails, here's a worse-looking more-correct solution
              * BufferedImage img = new BufferedImage(100, 20, BufferedImage.TYPE_INT_RGB); Graphics

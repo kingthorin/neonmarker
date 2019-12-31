@@ -56,6 +56,7 @@ public class ExtensionNeonmarker extends ExtensionAdaptor {
     }
 
     public static final String NAME = "ExtensionNeonmarker";
+    public static final Color PLACEHOLDER = new Color(0, 0, 0, 0);
     private ArrayList<ColorMapping> colormap;
     private NeonmarkerPanel neonmarkerPanel;
     private MarkItemColorHighlighter highlighter = null;
@@ -78,7 +79,9 @@ public class ExtensionNeonmarker extends ExtensionAdaptor {
             new Color(0xe0ffff),
             new Color(0xa8c0c0),
             new Color(0x708080),
-            new Color(0x384040)
+            new Color(0x384040),
+            // Placeholder
+            PLACEHOLDER
     };
 
     public ExtensionNeonmarker() {
@@ -169,7 +172,7 @@ public class ExtensionNeonmarker extends ExtensionAdaptor {
         return false;
     }
 
-    public Color[] addToPalette(Color addColor) {
+    public static Color[] addToPalette(Color addColor) {
         Color[] newPalette = new Color[palette.length + 1];
         int idx;
         for (idx = 0; idx < palette.length; idx++) {
