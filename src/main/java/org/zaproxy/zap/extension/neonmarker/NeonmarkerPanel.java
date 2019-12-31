@@ -56,7 +56,13 @@ class NeonmarkerPanel extends AbstractPanel {
 
     private static final long serialVersionUID = 3053763855777533887L;
 
-    private static final ImageIcon neonmarkerIcon;
+    private static final ImageIcon NEONMARKER_ICON;
+    private static final String FULL_BLOCK = "\u2588";
+    private static final String FOUR_BLOCKS = FULL_BLOCK + FULL_BLOCK + FULL_BLOCK + FULL_BLOCK;
+    private static final String UP_ARROW = "\u2191";
+    private static final String DOWN_ARROW = "\u2193";
+    private static final String MULTIPLICATION_X = "\u2715";
+
     private Model historyTableModel;
     private ArrayList<ExtensionNeonmarker.ColorMapping> colormap;
     private Container colorSelectionPanel;
@@ -64,7 +70,7 @@ class NeonmarkerPanel extends AbstractPanel {
     private JButton clearButton, addButton;
 
     static {
-        neonmarkerIcon = new ImageIcon(NeonmarkerPanel.class
+        NEONMARKER_ICON = new ImageIcon(NeonmarkerPanel.class
                 .getResource("/org/zaproxy/zap/extension/neonmarker/resources/spectrum.png"));
     }
 
@@ -76,7 +82,7 @@ class NeonmarkerPanel extends AbstractPanel {
 
     private void initializePanel() {
         setName(Constant.messages.getString("neonmarker.panel.title"));
-        setIcon(neonmarkerIcon);
+        setIcon(NEONMARKER_ICON);
         setLayout(new BorderLayout());
         add(getPanelToolbar(), BorderLayout.PAGE_START);
 
@@ -160,7 +166,7 @@ class NeonmarkerPanel extends AbstractPanel {
     }
 
     private Component getMoveButton(int ruleNumber, boolean up) {
-        JButton move = new JButton(up ? "\u2191" : "\u2193");
+        JButton move = new JButton(up ? UP_ARROW : DOWN_ARROW);
         if ((up && ruleNumber == 0) || (!up && ruleNumber == colormap.size() - 1)) {
             move.setEnabled(false);
         }
@@ -184,10 +190,12 @@ class NeonmarkerPanel extends AbstractPanel {
                 rule.color = JColorChooser.showDialog(this,
                         Constant.messages.getString("neonmarker.panel.color.chooser.title"),
                         Color.WHITE);
+                ExtensionNeonmarker.addToPalette(rule.color);
+                refreshDisplay();
             } else {
                 rule.color = (Color) colorSelect.getSelectedItem();
+                repaintHistoryTable();
             }
-            repaintHistoryTable();
         });
         return colorSelect;
     }
@@ -232,7 +240,7 @@ class NeonmarkerPanel extends AbstractPanel {
     }
 
     private Component getRemoveButton(int ruleNumber) {
-        JButton remove = new JButton("\u2715");
+        JButton remove = new JButton(MULTIPLICATION_X);
         remove.setToolTipText(Constant.messages.getString("neonmarker.panel.mapping.remove"));
         remove.setActionCommand("remove");
         remove.addActionListener(e -> {
@@ -325,7 +333,7 @@ class NeonmarkerPanel extends AbstractPanel {
                 setText(Constant.messages.getString("neonmarker.panel.color.menu.custom.label"));
                 setForeground(Color.BLACK);
             } else {
-                setText(" \u2588\u2588\u2588\u2588");
+                setText(" " + FOUR_BLOCKS);
                 setForeground((Color) entry);
             }
             /*

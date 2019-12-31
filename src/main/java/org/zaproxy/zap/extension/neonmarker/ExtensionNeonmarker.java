@@ -160,7 +160,7 @@ public class ExtensionNeonmarker extends ExtensionAdaptor {
             Color newColor = new Color(color);
             getColorMap().add(new ColorMapping(tag, newColor));
             if (!Arrays.asList(palette).contains(newColor)) {
-                palette = addToPalette(newColor);
+                addToPalette(newColor);
             }
             getNeonmarkerPanel().refreshDisplay();
             return true;
@@ -172,14 +172,14 @@ public class ExtensionNeonmarker extends ExtensionAdaptor {
         return false;
     }
 
-    public static Color[] addToPalette(Color addColor) {
+    public static void addToPalette(Color addColor) {
         Color[] newPalette = new Color[palette.length + 1];
         int idx;
         for (idx = 0; idx < palette.length; idx++) {
             newPalette[idx] = palette[idx];
         }
         newPalette[newPalette.length - 1] = addColor;
-        return newPalette;
+        palette = newPalette;
     }
 
     private boolean isValidColor(int colorValue) {
