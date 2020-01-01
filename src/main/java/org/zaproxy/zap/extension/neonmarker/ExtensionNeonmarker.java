@@ -89,7 +89,7 @@ public class ExtensionNeonmarker extends ExtensionAdaptor {
     }
 
     public void hook(ExtensionHook extensionHook) {
-        getHistoryExtension().getHistoryReferencesTable().setHighlighters(getHighligher());
+        toggleHighlighter(true);
 
         colormap = new ArrayList<>();
 
@@ -113,7 +113,7 @@ public class ExtensionNeonmarker extends ExtensionAdaptor {
     @Override
     public void unload() {
         neonmarkerPanel = null;
-        getHistoryExtension().getHistoryReferencesTable().removeHighlighter(getHighligher());
+        toggleHighlighter(false);
         super.unload();
     }
 
@@ -145,6 +145,14 @@ public class ExtensionNeonmarker extends ExtensionAdaptor {
             highlighter = new MarkItemColorHighlighter(getHistoryExtension(), idColumnIndex);
         }
         return highlighter;
+    }
+
+    protected void toggleHighlighter(boolean on) {
+        if (on) {
+            getHistoryExtension().getHistoryReferencesTable().setHighlighters(getHighligher());
+        } else {
+            getHistoryExtension().getHistoryReferencesTable().removeHighlighter(getHighligher());
+        }
     }
 
     /**

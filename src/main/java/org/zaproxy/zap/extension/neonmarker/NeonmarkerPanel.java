@@ -34,8 +34,12 @@ import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JSeparator;
+import javax.swing.JToggleButton;
 import javax.swing.JToolBar;
 import javax.swing.ListCellRenderer;
+import javax.swing.SwingConstants;
+import javax.swing.border.EmptyBorder;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
 import javax.swing.event.PopupMenuEvent;
@@ -47,6 +51,9 @@ import java.awt.Component;
 import java.awt.Container;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.awt.Insets;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -68,6 +75,7 @@ class NeonmarkerPanel extends AbstractPanel {
     private Container colorSelectionPanel;
     private JToolBar toolbar;
     private JButton clearButton, addButton;
+    private JToggleButton enableButton;
 
     static {
         NEONMARKER_ICON = new ImageIcon(NeonmarkerPanel.class
@@ -100,6 +108,8 @@ class NeonmarkerPanel extends AbstractPanel {
             toolbar.setRollover(true);
             toolbar.add(getClearButton());
             toolbar.add(getAddButton());
+            toolbar.add(new JSeparator(SwingConstants.VERTICAL));
+            toolbar.add(getEnableButton());
         }
         return toolbar;
     }
@@ -130,6 +140,38 @@ class NeonmarkerPanel extends AbstractPanel {
             });
         }
         return addButton;
+    }
+
+    private JToggleButton getEnableButton() {
+        if (enableButton == null) {
+            enableButton = new JToggleButton("Enabled", true);
+            enableButton.setMargin(new Insets(0, 3, 0, 3));
+            enableButton.setToolTipText(Constant.messages.getString(
+                    "neonmarker.panel.toolbar.toggle.button.tooltip.enabled"));
+            ItemListener itemListener = new ItemListener() {
+                @Override
+                public void itemStateChanged(ItemEvent itemEvent) {
+                    int state = itemEvent.getStateChange();
+                    if (state == ItemEvent.SELECTED) {
+                        enableButton.setText(Constant.messages
+                                .getString("neonmarker.panel.toolbar.toggle.button.label.enabled"));
+                        enableButton.setToolTipText(Constant.messages.getString(
+                                "neonmarker.panel.toolbar.toggle.button.tooltip.enabled"));
+                    } else {
+                        enableButton.setText(Constant.messages.getString(
+                                "neonmarker.panel.toolbar.toggle.button.label.disabled"));
+                        enableButton.setToolTipText(Constant.messages.getString(
+                                "neonmarker.panel.toolbar.toggle.button.tooltip.disabled"));
+                    }
+                    Control.getSingleton().getExtensionLoader()
+                            .getExtension(ExtensionNeonmarker.class)
+                            .toggleHighlighter(enableButton.isSelected());
+                }
+            };
+            enableButton.addItemListener(itemListener);
+        }
+        return enableButton;
+
     }
 
     private void clearColorSelectionPanel() {
@@ -333,9 +375,10 @@ class NeonmarkerPanel extends AbstractPanel {
                 setText(Constant.messages.getString("neonmarker.panel.color.menu.custom.label"));
                 setForeground(Color.BLACK);
             } else {
-                setText(" " + FOUR_BLOCKS);
+                setText(FOUR_BLOCKS);
                 setForeground((Color) entry);
             }
+            this.setBorder(new EmptyBorder(0, 3, 0, 3));
             /*
              * If the hack above some day fails, here's a worse-looking more-correct solution
              * BufferedImage img = new BufferedImage(100, 20, BufferedImage.TYPE_INT_RGB); Graphics

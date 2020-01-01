@@ -19,8 +19,5 @@ Neonmarker is a [@zaproxy](https://github.com/zaproxy/) addon which facilitates 
 - xml?
 - ZAP preference file?
 
-### User can disable the colouring temporarily using the UI panel
-- enable/disable button in panel toolbar
-
 ### IDEAS
 - Designer-picked colours "koodarivärit"
