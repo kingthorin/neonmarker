@@ -6,7 +6,7 @@ Neonmarker is a [@zaproxy](https://github.com/zaproxy/) addon which facilitates 
 
 ## Support
 
-If you have problems or enhancement requests they can be raised as issues in this repository (just click the (Issues tab)[https://github.com/kingthorin/neonmarker/issues] above).
+If you have problems or enhancement requests they can be raised as issues in this repository (just click the [Issues tab](https://github.com/kingthorin/neonmarker/issues) above).
 
 ### Help
 
