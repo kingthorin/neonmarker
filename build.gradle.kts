@@ -21,6 +21,8 @@ java {
     targetCompatibility = JavaVersion.VERSION_1_8
 }
 
+tasks.withType<JavaCompile>().configureEach { options.encoding = "utf-8" }
+
 zapAddOn {
     addOnName.set("Neonmarker")
     addOnStatus.set(AddOnStatus.ALPHA)
