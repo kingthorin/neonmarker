@@ -266,4 +266,12 @@ public class ExtensionNeonmarker extends ExtensionAdaptor {
             this.color = color;
         }
     }
+
+    @Override
+    public void postInstall() {
+        super.postInstall();
+        if (getView() != null) {
+            getNeonmarkerPanel().setTabFocus();
+        }
+    }
 }
