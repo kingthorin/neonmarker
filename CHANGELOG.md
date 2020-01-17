@@ -3,6 +3,12 @@ All notable changes to this add-on will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [Unreleased]
+
+### Changed
+- The panel is now shown when the addon is installed.
+
+
 ## [1.1.0] - 2020-01-02
 
 ### Changed
@@ -20,5 +26,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 Initial laser version.
 
+[Unreleased]: https://github.com/kingthorin/neonmarker/compare/v1.1.0...HEAD
 [1.1.0]: https://github.com/kingthorin/neonmarker/compare/e5d19ea50a3b8879c4e1e88fc36765635c2317de...v1.1.0
 [1]: https://github.com/juhakivekas/zap-extensions/releases/tag/1

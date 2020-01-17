@@ -21,3 +21,4 @@
 gradlew text
 
 *.jar binary
+*.png binary

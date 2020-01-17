@@ -13,7 +13,7 @@ repositories {
     mavenCentral()
 }
 
-version = "1.1.0"
+version = "1.2.0"
 description = "Colors history table items based on tags"
 
 java {
