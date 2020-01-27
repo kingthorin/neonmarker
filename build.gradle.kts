@@ -6,7 +6,7 @@ import org.zaproxy.gradle.addon.misc.ExtractLatestChangesFromChangelog
 
 plugins {
     `java-library`
-    id("org.zaproxy.add-on") version "0.2.0"
+    id("org.zaproxy.add-on") version "0.3.0"
 }
 
 repositories {
@@ -33,7 +33,8 @@ zapAddOn {
 
     manifest {
         author.set("Juha Kivekäs, Kingthorin")
-        url.set("https://github.com/kingthorin/neonmarker")
+        url.set("https://www.zaproxy.org/docs/desktop/addons/neonmarker/")
+        repo.set("https://github.com/kingthorin/neonmarker")
         changesFile.set(tasks.named<ConvertMarkdownToHtml>("generateManifestChanges").flatMap { it.html })
 
         helpSet {
