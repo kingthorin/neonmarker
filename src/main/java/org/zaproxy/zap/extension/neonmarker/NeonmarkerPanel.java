@@ -144,7 +144,8 @@ class NeonmarkerPanel extends AbstractPanel {
 
     private JToggleButton getEnableButton() {
         if (enableButton == null) {
-            enableButton = new JToggleButton("Enabled", true);
+            enableButton = new JToggleButton(Constant.messages
+                    .getString("neonmarker.panel.toolbar.toggle.button.label.enabled"), true);
             enableButton.setMargin(new Insets(0, 3, 0, 3));
             enableButton.setToolTipText(Constant.messages.getString(
                     "neonmarker.panel.toolbar.toggle.button.tooltip.enabled"));
