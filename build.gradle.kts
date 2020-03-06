@@ -5,6 +5,8 @@ import org.zaproxy.gradle.addon.misc.CreateGitHubRelease
 import org.zaproxy.gradle.addon.misc.ExtractLatestChangesFromChangelog
 
 plugins {
+    id("com.diffplug.gradle.spotless") version "3.27.2"
+    id("com.github.ben-manes.versions") version "0.28.0"
     `java-library`
     id("org.zaproxy.add-on") version "0.3.0"
 }
@@ -13,15 +15,23 @@ repositories {
     mavenCentral()
 }
 
-version = "1.2.0"
-description = "Colors history table items based on tags"
-
 java {
     sourceCompatibility = JavaVersion.VERSION_1_8
     targetCompatibility = JavaVersion.VERSION_1_8
 }
 
+spotless {
+    java {
+        // Don't enforce the license, just the format.
+        clearSteps()
+        googleJavaFormat().aosp()
+    }
+}
+
 tasks.withType<JavaCompile>().configureEach { options.encoding = "utf-8" }
+
+version = "1.2.0"
+description = "Colors history table items based on tags"
 
 zapAddOn {
     addOnName.set("Neonmarker")
