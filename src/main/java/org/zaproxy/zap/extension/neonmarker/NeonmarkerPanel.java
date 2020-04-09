@@ -405,7 +405,6 @@ class NeonmarkerPanel extends AbstractPanel {
             if (((Color) entry).equals(ExtensionNeonmarker.PLACEHOLDER)) {
                 setIcon(null);
                 setText(Constant.messages.getString("neonmarker.panel.color.menu.custom.label"));
-                setForeground(Color.BLACK);
             } else {
                 setText("");
                 setIcon(getColorIcon((Color) entry));
