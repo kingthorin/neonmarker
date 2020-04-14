@@ -30,7 +30,7 @@ spotless {
 
 tasks.withType<JavaCompile>().configureEach { options.encoding = "utf-8" }
 
-version = "1.2.0"
+version = "1.3.0"
 description = "Colors history table items based on tags"
 
 zapAddOn {
