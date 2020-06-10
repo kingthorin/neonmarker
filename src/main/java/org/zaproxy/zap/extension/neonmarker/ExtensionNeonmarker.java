@@ -20,6 +20,7 @@ package org.zaproxy.zap.extension.neonmarker;
 
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.EventQueue;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -279,7 +280,7 @@ public class ExtensionNeonmarker extends ExtensionAdaptor {
     public void postInstall() {
         super.postInstall();
         if (getView() != null) {
-            getNeonmarkerPanel().setTabFocus();
+            EventQueue.invokeLater(() -> getNeonmarkerPanel().setTabFocus());
         }
     }
 }
