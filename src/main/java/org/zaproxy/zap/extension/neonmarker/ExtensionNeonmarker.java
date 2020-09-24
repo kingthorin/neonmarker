@@ -89,11 +89,10 @@ public class ExtensionNeonmarker extends ExtensionAdaptor {
     }
 
     public void hook(ExtensionHook extensionHook) {
-        toggleHighlighter(true);
-
         colormap = new ArrayList<>();
 
         if (getView() != null) {
+            toggleHighlighter(true);
             extensionHook.getHookView().addWorkPanel(getNeonmarkerPanel());
             ExtensionHelp.enableHelpKey(getNeonmarkerPanel(), "neonmarker");
         }
