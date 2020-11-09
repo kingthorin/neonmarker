@@ -25,9 +25,7 @@ import java.awt.Container;
 import java.awt.Graphics;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
-import java.awt.Insets;
 import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -43,7 +41,6 @@ import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSeparator;
-import javax.swing.JToggleButton;
 import javax.swing.JToolBar;
 import javax.swing.ListCellRenderer;
 import javax.swing.SwingConstants;
@@ -58,6 +55,7 @@ import org.parosproxy.paros.extension.AbstractPanel;
 import org.parosproxy.paros.extension.history.ExtensionHistory;
 import org.parosproxy.paros.model.Model;
 import org.zaproxy.zap.extension.pscan.PassiveScanParam;
+import org.zaproxy.zap.view.ZapToggleButton;
 
 class NeonmarkerPanel extends AbstractPanel {
 
@@ -73,7 +71,7 @@ class NeonmarkerPanel extends AbstractPanel {
     private Container colorSelectionPanel;
     private JToolBar toolbar;
     private JButton clearButton, addButton;
-    private JToggleButton enableButton;
+    private ZapToggleButton enableButton;
 
     static {
         NEONMARKER_ICON =
@@ -109,7 +107,7 @@ class NeonmarkerPanel extends AbstractPanel {
             toolbar.add(getClearButton());
             toolbar.add(getAddButton());
             toolbar.add(new JSeparator(SwingConstants.VERTICAL));
-            toolbar.add(getEnableButton());
+            toolbar.add(getEnableToggleButton());
         }
         return toolbar;
     }
@@ -144,44 +142,43 @@ class NeonmarkerPanel extends AbstractPanel {
         return addButton;
     }
 
-    private JToggleButton getEnableButton() {
+    private ZapToggleButton getEnableToggleButton() {
         if (enableButton == null) {
             enableButton =
-                    new JToggleButton(
+                    new ZapToggleButton(
                             Constant.messages.getString(
                                     "neonmarker.panel.toolbar.toggle.button.label.enabled"),
                             true);
-            enableButton.setMargin(new Insets(0, 3, 0, 3));
+            enableButton.setIcon(
+                    new ImageIcon(
+                            NeonmarkerPanel.class.getResource(
+                                    ExtensionNeonmarker.RESOURCE + "/off.png")));
             enableButton.setToolTipText(
                     Constant.messages.getString(
+                            "neonmarker.panel.toolbar.toggle.button.tooltip.disabled"));
+            enableButton.setSelectedIcon(
+                    new ImageIcon(
+                            NeonmarkerPanel.class.getResource(
+                                    ExtensionNeonmarker.RESOURCE + "/on.png")));
+            enableButton.setSelectedToolTipText(
+                    Constant.messages.getString(
                             "neonmarker.panel.toolbar.toggle.button.tooltip.enabled"));
-            ItemListener itemListener =
-                    new ItemListener() {
-                        @Override
-                        public void itemStateChanged(ItemEvent itemEvent) {
-                            int state = itemEvent.getStateChange();
-                            if (state == ItemEvent.SELECTED) {
-                                enableButton.setText(
-                                        Constant.messages.getString(
-                                                "neonmarker.panel.toolbar.toggle.button.label.enabled"));
-                                enableButton.setToolTipText(
-                                        Constant.messages.getString(
-                                                "neonmarker.panel.toolbar.toggle.button.tooltip.enabled"));
-                            } else {
-                                enableButton.setText(
-                                        Constant.messages.getString(
-                                                "neonmarker.panel.toolbar.toggle.button.label.disabled"));
-                                enableButton.setToolTipText(
-                                        Constant.messages.getString(
-                                                "neonmarker.panel.toolbar.toggle.button.tooltip.disabled"));
-                            }
-                            Control.getSingleton()
-                                    .getExtensionLoader()
-                                    .getExtension(ExtensionNeonmarker.class)
-                                    .toggleHighlighter(enableButton.isSelected());
+            enableButton.addItemListener(
+                    event -> {
+                        if (event.getStateChange() == ItemEvent.SELECTED) {
+                            enableButton.setText(
+                                    Constant.messages.getString(
+                                            "neonmarker.panel.toolbar.toggle.button.label.enabled"));
+                        } else {
+                            enableButton.setText(
+                                    Constant.messages.getString(
+                                            "neonmarker.panel.toolbar.toggle.button.label.disabled"));
                         }
-                    };
-            enableButton.addItemListener(itemListener);
+                        Control.getSingleton()
+                                .getExtensionLoader()
+                                .getExtension(ExtensionNeonmarker.class)
+                                .toggleHighlighter(enableButton.isSelected());
+                    });
         }
         return enableButton;
     }

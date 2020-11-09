@@ -47,6 +47,7 @@ public class ExtensionNeonmarker extends ExtensionAdaptor {
     private static final Logger LOGGER = Logger.getLogger(ExtensionNeonmarker.class);
     private static final Range<Integer> INT_RANGE =
             Range.between(Integer.MIN_VALUE, Integer.MAX_VALUE);
+    public static final String RESOURCE = "/org/zaproxy/zap/extension/neonmarker/resources";
     private static final List<Class<? extends Extension>> EXTENSION_DEPENDENCIES;
 
     static {

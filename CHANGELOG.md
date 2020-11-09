@@ -5,8 +5,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Changed
+- Add red/green icon to Enable/Disable toggle button.
 
 ## [1.3.0] - 2020-09-29
+
 ### Fixed
 - Fixed an exception which was occurring when the tab was shown during install.
 - Fixed an exception when ZAP is used in CLI mode.
