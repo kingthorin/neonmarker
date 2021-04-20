@@ -5,10 +5,10 @@ import org.zaproxy.gradle.addon.misc.CreateGitHubRelease
 import org.zaproxy.gradle.addon.misc.ExtractLatestChangesFromChangelog
 
 plugins {
-    id("com.diffplug.gradle.spotless") version "3.27.2"
-    id("com.github.ben-manes.versions") version "0.28.0"
+    id("com.diffplug.spotless") version "5.12.1"
+    id("com.github.ben-manes.versions") version "0.38.0"
     `java-library`
-    id("org.zaproxy.add-on") version "0.3.0"
+    id("org.zaproxy.add-on") version "0.5.0"
 }
 
 repositories {
@@ -24,7 +24,7 @@ spotless {
     java {
         // Don't enforce the license, just the format.
         clearSteps()
-        googleJavaFormat().aosp()
+        googleJavaFormat("1.7").aosp()
     }
 }
 
