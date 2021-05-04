@@ -21,6 +21,7 @@ package org.zaproxy.zap.extension.neonmarker;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.EventQueue;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -41,7 +42,7 @@ import org.parosproxy.paros.model.HistoryReference;
 import org.parosproxy.paros.model.Model;
 import org.zaproxy.zap.extension.help.ExtensionHelp;
 import org.zaproxy.zap.extension.pscan.PassiveScanParam;
-import org.zaproxy.zap.view.table.DefaultHistoryReferencesTableModel;
+import org.zaproxy.zap.view.table.HistoryReferencesTableModel;
 
 public class ExtensionNeonmarker extends ExtensionAdaptor {
     private static final Logger LOGGER = Logger.getLogger(ExtensionNeonmarker.class);
@@ -62,33 +63,14 @@ public class ExtensionNeonmarker extends ExtensionAdaptor {
     private NeonmarkerPanel neonmarkerPanel;
     private MarkItemColorHighlighter highlighter = null;
 
-    static Color[] palette = {
-        // RAINBOW HACKER THEME
-        new Color(0xff8080),
-        new Color(0xffc080),
-        new Color(0xffff80),
-        new Color(0xc0ff80),
-        new Color(0x80ff80),
-        new Color(0x80ffc0),
-        new Color(0x80ffff),
-        new Color(0x80c0ff),
-        new Color(0x8080ff),
-        new Color(0xc080ff),
-        new Color(0xff80ff),
-        new Color(0xff80c0),
-        // CORPORATE EDITION
-        new Color(0xe0ffff),
-        new Color(0xa8c0c0),
-        new Color(0x708080),
-        new Color(0x384040),
-        // Placeholder
-        PLACEHOLDER
-    };
+    private static List<Color> palette = null;
 
     public ExtensionNeonmarker() {
         super(NAME);
+        getPalette();
     }
 
+    @Override
     public void hook(ExtensionHook extensionHook) {
         colormap = new ArrayList<>();
 
@@ -126,6 +108,35 @@ public class ExtensionNeonmarker extends ExtensionAdaptor {
         return "Juha Kivekäs, Kingthorin";
     }
 
+    static List<Color> getPalette() {
+        if (palette == null) {
+            palette = new ArrayList<>(17);
+            palette.addAll(
+                    Arrays.asList(
+                            // RAINBOW HACKER THEME
+                            new Color(0xff8080),
+                            new Color(0xffc080),
+                            new Color(0xffff80),
+                            new Color(0xc0ff80),
+                            new Color(0x80ff80),
+                            new Color(0x80ffc0),
+                            new Color(0x80ffff),
+                            new Color(0x80c0ff),
+                            new Color(0x8080ff),
+                            new Color(0xc080ff),
+                            new Color(0xff80ff),
+                            new Color(0xff80c0),
+                            // CORPORATE EDITION
+                            new Color(0xe0ffff),
+                            new Color(0xa8c0c0),
+                            new Color(0x708080),
+                            new Color(0x384040),
+                            // Placeholder
+                            PLACEHOLDER));
+        }
+        return palette;
+    }
+
     private NeonmarkerPanel getNeonmarkerPanel() {
         if (neonmarkerPanel == null) {
             neonmarkerPanel = new NeonmarkerPanel(getHistoryExtension().getModel(), colormap);
@@ -143,7 +154,7 @@ public class ExtensionNeonmarker extends ExtensionAdaptor {
                     getHistoryExtension()
                             .getHistoryReferencesTable()
                             .getModel()
-                            .getColumnIndex(DefaultHistoryReferencesTableModel.Column.HREF_ID);
+                            .getColumnIndex(HistoryReferencesTableModel.Column.HREF_ID);
             highlighter = new MarkItemColorHighlighter(getHistoryExtension(), idColumnIndex);
         }
         return highlighter;
@@ -169,7 +180,7 @@ public class ExtensionNeonmarker extends ExtensionAdaptor {
         if (isValidTag(tag) && isValidColor(color)) {
             Color newColor = new Color(color);
             getColorMap().add(new ColorMapping(tag, newColor));
-            if (!Arrays.asList(palette).contains(newColor)) {
+            if (!palette.contains(newColor)) {
                 addToPalette(newColor);
             }
             getNeonmarkerPanel().refreshDisplay();
@@ -183,13 +194,7 @@ public class ExtensionNeonmarker extends ExtensionAdaptor {
     }
 
     public static void addToPalette(Color addColor) {
-        Color[] newPalette = new Color[palette.length + 1];
-        int idx;
-        for (idx = 0; idx < palette.length; idx++) {
-            newPalette[idx] = palette[idx];
-        }
-        newPalette[newPalette.length - 1] = addColor;
-        palette = newPalette;
+        palette.add(addColor);
     }
 
     private boolean isValidColor(int colorValue) {
@@ -261,17 +266,35 @@ public class ExtensionNeonmarker extends ExtensionAdaptor {
         }
     }
 
-    static class ColorMapping {
-        public String tag;
-        public Color color;
+    static class ColorMapping implements Serializable {
+
+        private static final long serialVersionUID = -1054428983726909074L;
+        private String tag;
+        private Color color;
 
         ColorMapping() {
             this.tag = null;
-            this.color = palette[0];
+            this.color = palette.get(0);
         }
 
         ColorMapping(String tag, Color color) {
             this.tag = tag;
+            this.color = color;
+        }
+
+        public String getTag() {
+            return tag;
+        }
+
+        public void setTag(String tag) {
+            this.tag = tag;
+        }
+
+        public Color getColor() {
+            return color;
+        }
+
+        public void setColor(Color color) {
             this.color = color;
         }
     }

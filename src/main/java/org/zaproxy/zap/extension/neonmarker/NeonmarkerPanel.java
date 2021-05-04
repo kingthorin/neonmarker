@@ -28,7 +28,6 @@ import java.awt.GridBagLayout;
 import java.awt.event.ItemEvent;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import javax.swing.ComboBoxModel;
@@ -70,7 +69,8 @@ class NeonmarkerPanel extends AbstractPanel {
     private ArrayList<ExtensionNeonmarker.ColorMapping> colormap;
     private Container colorSelectionPanel;
     private JToolBar toolbar;
-    private JButton clearButton, addButton;
+    private JButton clearButton;
+    private JButton addButton;
     private ZapToggleButton enableButton;
 
     static {
@@ -232,27 +232,27 @@ class NeonmarkerPanel extends AbstractPanel {
     }
 
     private Component getColorComboBox(ExtensionNeonmarker.ColorMapping rule) {
-        JComboBox<Color> colorSelect;
-        colorSelect = new JComboBox<>(ExtensionNeonmarker.palette);
+        JComboBox<Color> colorSelect = new JComboBox<>();
+        ExtensionNeonmarker.getPalette().forEach(colorSelect::addItem);
         colorSelect.setRenderer(new ColorListRenderer());
         colorSelect.setSelectedItem(
-                isOnPalette(rule.color) ? rule.color : ExtensionNeonmarker.PLACEHOLDER);
+                isOnPalette(rule.getColor()) ? rule.getColor() : ExtensionNeonmarker.PLACEHOLDER);
         colorSelect.addActionListener(
                 actionEvent -> {
                     if (((Color) colorSelect.getSelectedItem())
                             .equals(ExtensionNeonmarker.PLACEHOLDER)) {
-                        rule.color =
+                        rule.setColor(
                                 JColorChooser.showDialog(
                                         this,
                                         Constant.messages.getString(
                                                 "neonmarker.panel.color.chooser.title"),
-                                        Color.WHITE);
-                        if (rule.color != null && !isOnPalette(rule.color)) {
-                            ExtensionNeonmarker.addToPalette(rule.color);
+                                        Color.WHITE));
+                        if (rule.getColor() != null && !isOnPalette(rule.getColor())) {
+                            ExtensionNeonmarker.addToPalette(rule.getColor());
                             refreshDisplay();
                         }
                     } else {
-                        rule.color = (Color) colorSelect.getSelectedItem();
+                        rule.setColor((Color) colorSelect.getSelectedItem());
                         repaintHistoryTable();
                     }
                 });
@@ -263,12 +263,7 @@ class NeonmarkerPanel extends AbstractPanel {
         if (color == null) {
             return false;
         }
-        for (Color clr : Arrays.asList(ExtensionNeonmarker.palette)) {
-            if (clr.equals(color)) {
-                return true;
-            }
-        }
-        return false;
+        return ExtensionNeonmarker.getPalette().contains(color);
     }
 
     private Component getTagComboBox(ExtensionNeonmarker.ColorMapping rule) {
@@ -282,17 +277,21 @@ class NeonmarkerPanel extends AbstractPanel {
                     }
 
                     @Override
-                    public void popupMenuWillBecomeInvisible(PopupMenuEvent popupMenuEvent) {}
+                    public void popupMenuWillBecomeInvisible(PopupMenuEvent popupMenuEvent) {
+                        // Nothing to do
+                    }
 
                     @Override
-                    public void popupMenuCanceled(PopupMenuEvent popupMenuEvent) {}
+                    public void popupMenuCanceled(PopupMenuEvent popupMenuEvent) {
+                        // Nothing to do
+                    }
                 });
         tagSelect.addActionListener(
                 actionEvent -> {
-                    rule.tag = (String) tagSelect.getSelectedItem();
+                    rule.setTag((String) tagSelect.getSelectedItem());
                     repaintHistoryTable();
                 });
-        tagSelect.setSelectedItem(rule.tag);
+        tagSelect.setSelectedItem(rule.getTag());
         return tagSelect;
     }
 
@@ -342,7 +341,7 @@ class NeonmarkerPanel extends AbstractPanel {
                     .getParamSet(PassiveScanParam.class)
                     .getAutoTagScanners()
                     .forEach(
-                            (tagger) -> {
+                            tagger -> {
                                 if (!allTags.contains(tagger.getConf())) {
                                     allTags.add(tagger.getConf());
                                 }
