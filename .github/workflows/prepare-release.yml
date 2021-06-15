@@ -1,15 +1,11 @@
-name: Build Release
+name: Prepare Release
 
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - 'gradle.properties'
+  workflow_dispatch:
 
 jobs:
-  build:
-    name: Build Release
+  prepare-release:
+    name: Prepare Release
     runs-on: ubuntu-latest
     steps:
     - name: Checkout
@@ -21,9 +17,7 @@ jobs:
       uses: actions/setup-java@v1
       with:
         java-version: 8
-    - name: Generate Release State
-      run: ./gradlew generateReleaseStateLastCommit
-    - name: Gradle Build and Release
+    - name: Prepare Release and Create Pull Request
       env:
         AUTH_TOKEN: ${{ secrets.AUTH_TOKEN }}
-      run: ./gradlew releaseAddOn
+      run: ./gradlew createPullRequestRelease
