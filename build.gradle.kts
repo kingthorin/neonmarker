@@ -1,4 +1,4 @@
-import org.zaproxy.gradle.addon.AddOnPlugin
+import net.ltgt.gradle.errorprone.errorprone
 import org.zaproxy.gradle.addon.AddOnStatus
 import org.zaproxy.gradle.addon.internal.model.GitHubUser
 import org.zaproxy.gradle.addon.internal.model.ProjectInfo
@@ -7,8 +7,9 @@ import org.zaproxy.gradle.addon.internal.tasks.GenerateReleaseStateLastCommit
 import org.zaproxy.gradle.addon.misc.ConvertMarkdownToHtml
 
 plugins {
-    id("com.diffplug.spotless") version "5.12.1"
-    id("com.github.ben-manes.versions") version "0.38.0"
+    id("com.diffplug.spotless") version "5.14.1"
+    id("com.github.ben-manes.versions") version "0.39.0"
+    id("net.ltgt.errorprone") version "2.0.2"
     `java-library`
     id("org.zaproxy.add-on") version "0.6.0"
 }
@@ -22,7 +23,17 @@ java {
     targetCompatibility = JavaVersion.VERSION_1_8
 }
 
+dependencies {
+    "errorprone"("com.google.errorprone:error_prone_core:2.7.1")
+    if (JavaVersion.current() == JavaVersion.VERSION_1_8) {
+        "errorproneJavac"("com.google.errorprone:javac:9+181-r4173-1")
+    }
+}
+
 spotless {
+    kotlinGradle {
+        ktlint()
+    }
     java {
         // Don't enforce the license, just the format.
         clearSteps()
@@ -30,7 +41,16 @@ spotless {
     }
 }
 
-tasks.withType<JavaCompile>().configureEach { options.encoding = "utf-8" }
+tasks.withType<JavaCompile>().configureEach {
+    options.encoding = "utf-8"
+    options.errorprone {
+        disableAllChecks.set(true)
+        error(
+            "MissingOverride",
+            "WildcardImport"
+        )
+    }
+}
 
 description = "Colors history table items based on tags"
 
