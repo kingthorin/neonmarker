@@ -57,7 +57,7 @@ description = "Colors history table items based on tags"
 zapAddOn {
     addOnName.set("Neonmarker")
     addOnStatus.set(AddOnStatus.ALPHA)
-    zapVersion.set("2.8.0")
+    zapVersion.set("2.10.0")
 
     releaseLink.set("https://github.com/kingthorin/neonmarker/compare/v@PREVIOUS_VERSION@...v@CURRENT_VERSION@")
     unreleasedLink.set("https://github.com/kingthorin/neonmarker/compare/v@CURRENT_VERSION@...HEAD")
