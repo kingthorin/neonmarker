@@ -3,7 +3,7 @@ All notable changes to this add-on will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-## [Unreleased]
+## [1.4.0] - 2021-08-26
 
 ### Changed
 - Add red/green icon to Enable/Disable toggle button.
@@ -40,7 +40,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 Initial laser version.
 
-[Unreleased]: https://github.com/kingthorin/neonmarker/compare/v1.3.0...HEAD
+[1.4.0]: https://github.com/kingthorin/neonmarker/compare/v1.3.0...v1.4.0
 [1.3.0]: https://github.com/kingthorin/neonmarker/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/kingthorin/neonmarker/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/kingthorin/neonmarker/compare/e5d19ea50a3b8879c4e1e88fc36765635c2317de...v1.1.0
