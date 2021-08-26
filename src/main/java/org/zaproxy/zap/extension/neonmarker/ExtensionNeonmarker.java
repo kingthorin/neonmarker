@@ -26,8 +26,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import org.apache.commons.lang3.Range;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jdesktop.swingx.decorator.AbstractHighlighter;
 import org.jdesktop.swingx.decorator.ComponentAdapter;
 import org.jdesktop.swingx.decorator.HighlightPredicate;
@@ -45,7 +47,7 @@ import org.zaproxy.zap.extension.pscan.PassiveScanParam;
 import org.zaproxy.zap.view.table.HistoryReferencesTableModel;
 
 public class ExtensionNeonmarker extends ExtensionAdaptor {
-    private static final Logger LOGGER = Logger.getLogger(ExtensionNeonmarker.class);
+    private static final Logger LOGGER = LogManager.getLogger(ExtensionNeonmarker.class);
     private static final Range<Integer> INT_RANGE =
             Range.between(Integer.MIN_VALUE, Integer.MAX_VALUE);
     public static final String RESOURCE = "/org/zaproxy/zap/extension/neonmarker/resources";
@@ -179,17 +181,17 @@ public class ExtensionNeonmarker extends ExtensionAdaptor {
     public boolean addColorMapping(String tag, int color) {
         if (isValidTag(tag) && isValidColor(color)) {
             Color newColor = new Color(color);
-            getColorMap().add(new ColorMapping(tag, newColor));
+            ColorMapping newMapping = new ColorMapping(tag, newColor);
+            if (!getColorMap().contains(newMapping)) {
+                getColorMap().add(newMapping);
+            }
             if (!palette.contains(newColor)) {
                 addToPalette(newColor);
             }
             getNeonmarkerPanel().refreshDisplay();
             return true;
         }
-        if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug(
-                    "Either the tag: \"" + tag + "\" or the color: \"" + color + " was invalid.");
-        }
+        LOGGER.debug("Either the tag: \"{}\" or the color: \"{}\" was invalid.", tag, color);
         return false;
     }
 
@@ -296,6 +298,26 @@ public class ExtensionNeonmarker extends ExtensionAdaptor {
 
         public void setColor(Color color) {
             this.color = color;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(color, tag);
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) {
+                return true;
+            }
+            if (obj == null) {
+                return false;
+            }
+            if (getClass() != obj.getClass()) {
+                return false;
+            }
+            ColorMapping other = (ColorMapping) obj;
+            return Objects.equals(color, other.color) && Objects.equals(tag, other.tag);
         }
     }
 

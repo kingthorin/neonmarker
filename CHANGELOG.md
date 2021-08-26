@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 - Add red/green icon to Enable/Disable toggle button.
 - Maintenance changes.
+- Now targeting ZAP 2.10.
+- Ensure added color mappings are unique (Issue 11). Only applies when mappings are added programmatically, a user can still define the same mapping multiple times via the GUI (hopefully they'll recognize the inefficiency of doing so).
 
 ## [1.3.0] - 2020-09-29
 
