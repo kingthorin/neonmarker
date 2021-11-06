@@ -7,11 +7,11 @@ import org.zaproxy.gradle.addon.internal.tasks.GenerateReleaseStateLastCommit
 import org.zaproxy.gradle.addon.misc.ConvertMarkdownToHtml
 
 plugins {
-    id("com.diffplug.spotless") version "5.14.1"
+    id("com.diffplug.spotless") version "5.17.1"
     id("com.github.ben-manes.versions") version "0.39.0"
     id("net.ltgt.errorprone") version "2.0.2"
     `java-library`
-    id("org.zaproxy.add-on") version "0.6.0"
+    id("org.zaproxy.add-on") version "0.7.0"
 }
 
 repositories {
@@ -24,7 +24,7 @@ java {
 }
 
 dependencies {
-    "errorprone"("com.google.errorprone:error_prone_core:2.7.1")
+    "errorprone"("com.google.errorprone:error_prone_core:2.10.0")
     if (JavaVersion.current() == JavaVersion.VERSION_1_8) {
         "errorproneJavac"("com.google.errorprone:javac:9+181-r4173-1")
     }
