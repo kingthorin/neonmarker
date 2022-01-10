@@ -1,8 +1,11 @@
+[![Neonmarker Development Stats on Open Hub](https://www.openhub.net/p/neonmarker/widgets/project_thin_badge.gif)](https://www.openhub.net/p/neonmarker)
+
 # Neonmarker
 
 Continuation of the Zaproxy Neonmarker addon by [@juhakivekas](https://github.com/juhakivekas).
 
 Neonmarker is a [@zaproxy](https://github.com/zaproxy/) addon which facilitates colouring of History table entries based on the Tags that have been applied to them (either by the Passive scanner or manually).
+
 
 ## Example
 
