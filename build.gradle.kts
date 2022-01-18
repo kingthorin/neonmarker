@@ -11,7 +11,7 @@ plugins {
     id("com.github.ben-manes.versions") version "0.39.0"
     id("net.ltgt.errorprone") version "2.0.2"
     `java-library`
-    id("org.zaproxy.add-on") version "0.7.0"
+    id("org.zaproxy.add-on") version "0.8.0"
 }
 
 repositories {
