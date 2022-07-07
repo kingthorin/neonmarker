@@ -37,22 +37,29 @@ import javax.swing.JColorChooser;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JList;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSeparator;
 import javax.swing.JToolBar;
 import javax.swing.ListCellRenderer;
 import javax.swing.SwingConstants;
+import javax.swing.SwingWorker;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.parosproxy.paros.Constant;
 import org.parosproxy.paros.control.Control;
+import org.parosproxy.paros.db.DatabaseException;
 import org.parosproxy.paros.extension.AbstractPanel;
 import org.parosproxy.paros.extension.history.ExtensionHistory;
+import org.parosproxy.paros.model.HistoryReference;
 import org.parosproxy.paros.model.Model;
+import org.parosproxy.paros.view.View;
 import org.zaproxy.zap.extension.pscan.PassiveScanParam;
 import org.zaproxy.zap.view.ZapToggleButton;
 
@@ -60,7 +67,8 @@ class NeonmarkerPanel extends AbstractPanel {
 
     private static final long serialVersionUID = 3053763855777533887L;
 
-    private static final ImageIcon NEONMARKER_ICON;
+    private static final Logger LOGGER = LogManager.getLogger(NeonmarkerPanel.class);
+
     private static final String UP_ARROW = "\u2191";
     private static final String DOWN_ARROW = "\u2193";
     private static final String MULTIPLICATION_X = "\u2715";
@@ -72,13 +80,8 @@ class NeonmarkerPanel extends AbstractPanel {
     private JButton clearButton;
     private JButton addButton;
     private ZapToggleButton enableButton;
-
-    static {
-        NEONMARKER_ICON =
-                new ImageIcon(
-                        NeonmarkerPanel.class.getResource(
-                                "/org/zaproxy/zap/extension/neonmarker/resources/spectrum.png"));
-    }
+    private ExtensionHistory extHist =
+            Control.getSingleton().getExtensionLoader().getExtension(ExtensionHistory.class);
 
     NeonmarkerPanel(Model model, ArrayList<ExtensionNeonmarker.ColorMapping> colormap) {
         historyTableModel = model;
@@ -88,7 +91,7 @@ class NeonmarkerPanel extends AbstractPanel {
 
     private void initializePanel() {
         setName(Constant.messages.getString("neonmarker.panel.title"));
-        setIcon(NEONMARKER_ICON);
+        setIcon(ExtensionNeonmarker.getIcon());
         setLayout(new BorderLayout());
         add(getPanelToolbar(), BorderLayout.PAGE_START);
 
@@ -309,11 +312,84 @@ class NeonmarkerPanel extends AbstractPanel {
         remove.setActionCommand("remove");
         remove.addActionListener(
                 e -> {
-                    if (colormap.size() <= 1) return;
-                    colormap.remove(ruleNumber);
+                    if (colormap.isEmpty()) {
+                        return;
+                    }
+                    String tag = colormap.get(ruleNumber).getTag();
+                    if (ExtensionNeonmarker.TAG_PATTERN.matcher(tag).matches()) {
+                        switch (getRemovalChoice()) {
+                            case JOptionPane.CANCEL_OPTION:
+                            case JOptionPane.CLOSED_OPTION:
+                                return;
+                            case JOptionPane.NO_OPTION:
+                                removeMapping(ruleNumber);
+                                break;
+                            case JOptionPane.YES_OPTION:
+                                removeTagFromHistoryTable(tag);
+                                removeMapping(ruleNumber);
+                                break;
+                            default:
+                                return;
+                        }
+                    } else {
+                        colormap.remove(ruleNumber);
+                    }
                     refreshDisplay();
                 });
         return remove;
+    }
+
+    private void removeMapping(int ruleNumber) {
+        if (colormap.size() == 1) {
+            colormap.remove(ruleNumber);
+            colormap.add(new ExtensionNeonmarker.ColorMapping());
+        } else {
+            colormap.remove(ruleNumber);
+        }
+    }
+
+    private int getRemovalChoice() {
+        return JOptionPane.showConfirmDialog(
+                View.getSingleton().getMainFrame(),
+                Constant.messages.getString("neonmarker.remove.prompt.message"),
+                Constant.messages.getString("neonmarker.remove.prompt.title"),
+                JOptionPane.YES_NO_CANCEL_OPTION);
+    }
+
+    private List<Integer> getHistoryIds() {
+        List<Integer> historyIds = null;
+        try {
+            historyIds =
+                    historyTableModel
+                            .getDb()
+                            .getTableHistory()
+                            .getHistoryIdsOfHistType(
+                                    Model.getSingleton().getSession().getSessionId(),
+                                    HistoryReference.TYPE_PROXIED,
+                                    HistoryReference.TYPE_ZAP_USER,
+                                    HistoryReference.TYPE_PROXY_CONNECT);
+        } catch (DatabaseException e1) {
+            LOGGER.warn("Could not get History IDs");
+        }
+        if (historyIds == null) {
+            return Collections.emptyList();
+        }
+        return historyIds;
+    }
+
+    private void removeTagFromHistoryTable(String tag) {
+        SwingWorker<Void, Void> remove =
+                new SwingWorker<Void, Void>() {
+                    @Override
+                    protected Void doInBackground() {
+                        for (int id : getHistoryIds()) {
+                            HistoryReference hr = extHist.getHistoryReference(id);
+                            hr.deleteTag(tag);
+                        }
+                        return null;
+                    }
+                };
+        remove.execute();
     }
 
     /**

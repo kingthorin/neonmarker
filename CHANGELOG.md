@@ -4,7 +4,8 @@ All notable changes to this add-on will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
-
+### Added
+- A right-click context menu is now available in the History tab in order to Select/Set a color for arbitrary messages.
 
 ## [1.4.0] - 2021-08-26
 
