@@ -27,6 +27,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.regex.Pattern;
+import javax.swing.ImageIcon;
 import org.apache.commons.lang3.Range;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -50,7 +52,6 @@ public class ExtensionNeonmarker extends ExtensionAdaptor {
     private static final Logger LOGGER = LogManager.getLogger(ExtensionNeonmarker.class);
     private static final Range<Integer> INT_RANGE =
             Range.between(Integer.MIN_VALUE, Integer.MAX_VALUE);
-    public static final String RESOURCE = "/org/zaproxy/zap/extension/neonmarker/resources";
     private static final List<Class<? extends Extension>> EXTENSION_DEPENDENCIES;
 
     static {
@@ -61,11 +62,21 @@ public class ExtensionNeonmarker extends ExtensionAdaptor {
 
     public static final String NAME = "ExtensionNeonmarker";
     public static final Color PLACEHOLDER = new Color(0, 0, 0, 0);
+    public static final String RESOURCE = "/org/zaproxy/zap/extension/neonmarker/resources";
+
+    public static final String TAG_PREFIX = "neon_";
+    public static final Pattern TAG_PATTERN =
+            Pattern.compile(
+                    ExtensionNeonmarker.TAG_PREFIX
+                            + "[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[0-9a-f]{4}-[0-9a-f]{12}");
     private ArrayList<ColorMapping> colormap;
     private NeonmarkerPanel neonmarkerPanel;
     private MarkItemColorHighlighter highlighter = null;
 
     private static List<Color> palette = null;
+    private static ImageIcon icon;
+
+    private PopupMenuHistoryNeonmarker menuHistoryColor;
 
     public ExtensionNeonmarker() {
         super(NAME);
@@ -76,10 +87,12 @@ public class ExtensionNeonmarker extends ExtensionAdaptor {
     public void hook(ExtensionHook extensionHook) {
         colormap = new ArrayList<>();
 
-        if (getView() != null) {
+        if (hasView()) {
             toggleHighlighter(true);
             extensionHook.getHookView().addWorkPanel(getNeonmarkerPanel());
             ExtensionHelp.enableHelpKey(getNeonmarkerPanel(), "neonmarker");
+
+            extensionHook.getHookMenu().addPopupMenuItem(getMenuHistoryColor());
         }
     }
 
@@ -139,11 +152,18 @@ public class ExtensionNeonmarker extends ExtensionAdaptor {
         return palette;
     }
 
-    private NeonmarkerPanel getNeonmarkerPanel() {
+    NeonmarkerPanel getNeonmarkerPanel() {
         if (neonmarkerPanel == null) {
             neonmarkerPanel = new NeonmarkerPanel(getHistoryExtension().getModel(), colormap);
         }
         return neonmarkerPanel;
+    }
+
+    static ImageIcon getIcon() {
+        if (icon == null) {
+            icon = new ImageIcon(ExtensionNeonmarker.class.getResource(RESOURCE + "/spectrum.png"));
+        }
+        return icon;
     }
 
     private ExtensionHistory getHistoryExtension() {
@@ -327,5 +347,12 @@ public class ExtensionNeonmarker extends ExtensionAdaptor {
         if (getView() != null) {
             EventQueue.invokeLater(() -> getNeonmarkerPanel().setTabFocus());
         }
+    }
+
+    private PopupMenuHistoryNeonmarker getMenuHistoryColor() {
+        if (menuHistoryColor == null) {
+            menuHistoryColor = new PopupMenuHistoryNeonmarker();
+        }
+        return menuHistoryColor;
     }
 }
