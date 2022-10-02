@@ -7,8 +7,8 @@ import org.zaproxy.gradle.addon.internal.tasks.GenerateReleaseStateLastCommit
 import org.zaproxy.gradle.addon.misc.ConvertMarkdownToHtml
 
 plugins {
-    id("com.diffplug.spotless") version "5.17.1"
-    id("com.github.ben-manes.versions") version "0.39.0"
+    id("com.diffplug.spotless") version "6.11.0"
+    id("com.github.ben-manes.versions") version "0.42.0"
     id("net.ltgt.errorprone") version "2.0.2"
     `java-library`
     id("org.zaproxy.add-on") version "0.8.0"
@@ -19,15 +19,13 @@ repositories {
 }
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_1_8
-    targetCompatibility = JavaVersion.VERSION_1_8
+    val javaVersion = JavaVersion.VERSION_11
+    sourceCompatibility = javaVersion
+    targetCompatibility = javaVersion
 }
 
 dependencies {
-    "errorprone"("com.google.errorprone:error_prone_core:2.10.0")
-    if (JavaVersion.current() == JavaVersion.VERSION_1_8) {
-        "errorproneJavac"("com.google.errorprone:javac:9+181-r4173-1")
-    }
+    "errorprone"("com.google.errorprone:error_prone_core:2.15.0")
 }
 
 spotless {
