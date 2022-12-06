@@ -1,3 +1,4 @@
+import com.diffplug.spotless.extra.wtp.EclipseWtpFormatterStep
 import net.ltgt.gradle.errorprone.errorprone
 import org.zaproxy.gradle.addon.AddOnStatus
 import org.zaproxy.gradle.addon.internal.model.GitHubUser
@@ -37,6 +38,14 @@ spotless {
         clearSteps()
         googleJavaFormat("1.7").aosp()
     }
+    format("html", {
+        eclipseWtp(EclipseWtpFormatterStep.HTML)
+        target(
+            fileTree(projectDir) {
+                include("src/**/*.html")
+            }
+        )
+    })
 }
 
 tasks.withType<JavaCompile>().configureEach {
