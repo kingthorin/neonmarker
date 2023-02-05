@@ -262,7 +262,7 @@ class NeonmarkerPanel extends AbstractPanel {
         return colorSelect;
     }
 
-    private boolean isOnPalette(Color color) {
+    private static boolean isOnPalette(Color color) {
         if (color == null) {
             return false;
         }
@@ -298,7 +298,7 @@ class NeonmarkerPanel extends AbstractPanel {
         return tagSelect;
     }
 
-    private void repaintHistoryTable() {
+    private static void repaintHistoryTable() {
         Control.getSingleton()
                 .getExtensionLoader()
                 .getExtension(ExtensionHistory.class)
@@ -348,7 +348,7 @@ class NeonmarkerPanel extends AbstractPanel {
         }
     }
 
-    private int getRemovalChoice() {
+    private static int getRemovalChoice() {
         return JOptionPane.showConfirmDialog(
                 View.getSingleton().getMainFrame(),
                 Constant.messages.getString("neonmarker.remove.prompt.message"),
@@ -467,7 +467,7 @@ class NeonmarkerPanel extends AbstractPanel {
      * Renderer for JComboBox that makes colours visible in the UI instead of handling them by name
      * or value.
      */
-    private class ColorListRenderer extends JLabel implements ListCellRenderer<Object> {
+    private static class ColorListRenderer extends JLabel implements ListCellRenderer<Object> {
 
         private static final long serialVersionUID = -5808258749585681496L;
 
@@ -485,7 +485,7 @@ class NeonmarkerPanel extends AbstractPanel {
             return this;
         }
 
-        private ImageIcon getColorIcon(Color color) {
+        private static ImageIcon getColorIcon(Color color) {
             BufferedImage img = new BufferedImage(100, 16, BufferedImage.TYPE_INT_RGB);
             Graphics graphics = img.createGraphics();
             graphics.setColor(color);

@@ -69,13 +69,13 @@ public class ExtensionNeonmarker extends ExtensionAdaptor {
             Pattern.compile(
                     ExtensionNeonmarker.TAG_PREFIX
                             + "[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[0-9a-f]{4}-[0-9a-f]{12}");
-    private ArrayList<ColorMapping> colormap;
-    private NeonmarkerPanel neonmarkerPanel;
-    private MarkItemColorHighlighter highlighter = null;
 
-    private static List<Color> palette = null;
+    private static List<Color> palette;
     private static ImageIcon icon;
 
+    private ArrayList<ColorMapping> colormap;
+    private NeonmarkerPanel neonmarkerPanel;
+    private MarkItemColorHighlighter highlighter;
     private PopupMenuHistoryNeonmarker menuHistoryColor;
 
     public ExtensionNeonmarker() {
@@ -166,7 +166,7 @@ public class ExtensionNeonmarker extends ExtensionAdaptor {
         return icon;
     }
 
-    private ExtensionHistory getHistoryExtension() {
+    private static ExtensionHistory getHistoryExtension() {
         return Control.getSingleton().getExtensionLoader().getExtension(ExtensionHistory.class);
     }
 
@@ -219,11 +219,11 @@ public class ExtensionNeonmarker extends ExtensionAdaptor {
         palette.add(addColor);
     }
 
-    private boolean isValidColor(int colorValue) {
+    private static boolean isValidColor(int colorValue) {
         return INT_RANGE.contains(colorValue);
     }
 
-    private boolean isValidTag(String tag) {
+    private static boolean isValidTag(String tag) {
         try {
             List<String> tags = new ArrayList<>();
             Model.getSingleton()
@@ -330,10 +330,7 @@ public class ExtensionNeonmarker extends ExtensionAdaptor {
             if (this == obj) {
                 return true;
             }
-            if (obj == null) {
-                return false;
-            }
-            if (getClass() != obj.getClass()) {
+            if (!(obj instanceof ColorMapping)) {
                 return false;
             }
             ColorMapping other = (ColorMapping) obj;

@@ -8,9 +8,9 @@ import org.zaproxy.gradle.addon.internal.tasks.GenerateReleaseStateLastCommit
 import org.zaproxy.gradle.addon.misc.ConvertMarkdownToHtml
 
 plugins {
-    id("com.diffplug.spotless") version "6.11.0"
-    id("com.github.ben-manes.versions") version "0.42.0"
-    id("net.ltgt.errorprone") version "2.0.2"
+    id("com.diffplug.spotless") version "6.14.1"
+    id("com.github.ben-manes.versions") version "0.45.0"
+    id("net.ltgt.errorprone") version "3.0.1"
     `java-library`
     id("org.zaproxy.add-on") version "0.8.0"
 }
@@ -26,7 +26,7 @@ java {
 }
 
 dependencies {
-    "errorprone"("com.google.errorprone:error_prone_core:2.15.0")
+    "errorprone"("com.google.errorprone:error_prone_core:2.18.0")
 }
 
 spotless {
@@ -43,7 +43,7 @@ spotless {
         target(
             fileTree(projectDir) {
                 include("src/**/*.html")
-            }
+            },
         )
     })
 }
@@ -51,10 +51,9 @@ spotless {
 tasks.withType<JavaCompile>().configureEach {
     options.encoding = "utf-8"
     options.errorprone {
-        disableAllChecks.set(true)
         error(
-            "MissingOverride",
-            "WildcardImport"
+            "MethodCanBeStatic",
+            "WildcardImport",
         )
     }
 }
