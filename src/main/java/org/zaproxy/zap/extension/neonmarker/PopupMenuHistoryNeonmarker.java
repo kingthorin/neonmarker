@@ -35,8 +35,8 @@ public class PopupMenuHistoryNeonmarker extends PopupMenuHistoryReferenceContain
         PopupMenuItemHistoryUntag unTag =
                 new PopupMenuItemHistoryUntag(
                         Constant.messages.getString("neonmarker.popup.item.untag.label"));
-        this.add(setColor);
-        this.add(unTag);
+        add(setColor);
+        add(unTag);
     }
 
     @Override
