@@ -8,11 +8,11 @@ import org.zaproxy.gradle.addon.internal.tasks.GenerateReleaseStateLastCommit
 import org.zaproxy.gradle.addon.misc.ConvertMarkdownToHtml
 
 plugins {
-    id("com.diffplug.spotless") version "6.14.1"
-    id("com.github.ben-manes.versions") version "0.45.0"
-    id("net.ltgt.errorprone") version "3.0.1"
+    id("com.diffplug.spotless") version "6.20.0"
+    id("com.github.ben-manes.versions") version "0.47.0"
+    id("net.ltgt.errorprone") version "3.1.0"
     `java-library`
-    id("org.zaproxy.add-on") version "0.8.0"
+    id("org.zaproxy.add-on") version "0.9.0"
     id("org.zaproxy.common") version "0.1.0"
 }
 
@@ -37,7 +37,7 @@ spotless {
     java {
         // Don't enforce the license, just the format.
         clearSteps()
-        googleJavaFormat("1.7").aosp()
+        googleJavaFormat("1.17.0").aosp()
     }
     format("html", {
         eclipseWtp(EclipseWtpFormatterStep.HTML)
