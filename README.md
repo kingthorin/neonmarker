@@ -17,7 +17,7 @@ If you have problems or enhancement requests they can be raised as issues in thi
 
 ### Help
 
-Basic help info is available both within ZAP and via the [wiki](https://github.com/kingthorin/neonmarker/wiki), including an example of how you can add color mappings via ZAP script.
+Basic help info is available both within ZAP and via the [ZAP website](https://www.zaproxy.org/docs/desktop/addons/neonmarker/), including an example of how you can add color mappings via ZAP script.
 
 ## Backlog/TODO
 
