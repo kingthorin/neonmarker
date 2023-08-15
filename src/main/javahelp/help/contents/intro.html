@@ -24,7 +24,7 @@
 	<p></p>
 	<pre>
 		<code>
-		extNeon = org.parosproxy.paros.control.Control.getSingleton().getExtensionLoader().getExtension(org.zaproxy.zap.extension.neonmarker.ExtensionNeonmarker.NAME);
+		extNeon = control.getExtensionLoader().getExtension(org.zaproxy.zap.extension.neonmarker.ExtensionNeonmarker.NAME);
 		
 		// History items tagged “Comment” will be red
 		extNeon.addColorMapping("Comment", 0x990000);
