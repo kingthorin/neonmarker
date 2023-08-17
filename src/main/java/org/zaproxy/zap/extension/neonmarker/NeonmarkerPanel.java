@@ -316,7 +316,7 @@ class NeonmarkerPanel extends AbstractPanel {
                         return;
                     }
                     String tag = colormap.get(ruleNumber).getTag();
-                    if (ExtensionNeonmarker.TAG_PATTERN.matcher(tag).matches()) {
+                    if (tag != null && ExtensionNeonmarker.TAG_PATTERN.matcher(tag).matches()) {
                         switch (getRemovalChoice()) {
                             case JOptionPane.CANCEL_OPTION:
                             case JOptionPane.CLOSED_OPTION:
@@ -332,7 +332,7 @@ class NeonmarkerPanel extends AbstractPanel {
                                 return;
                         }
                     } else {
-                        colormap.remove(ruleNumber);
+                        removeMapping(ruleNumber);
                     }
                     refreshDisplay();
                 });
@@ -340,11 +340,9 @@ class NeonmarkerPanel extends AbstractPanel {
     }
 
     private void removeMapping(int ruleNumber) {
-        if (colormap.size() == 1) {
-            colormap.remove(ruleNumber);
+        colormap.remove(ruleNumber);
+        if (colormap.isEmpty()) {
             colormap.add(new ExtensionNeonmarker.ColorMapping());
-        } else {
-            colormap.remove(ruleNumber);
         }
     }
 
