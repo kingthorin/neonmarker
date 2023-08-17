@@ -8,6 +8,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Maintenance changes.
 - The script example in the Help content was updated to use the injected core variables instead of using the fully qualified class name.
 
+### Fixed
+- An NPE which could happen when removing an entry that didn't yet have a tag assigned.
+
 ## [1.5.0] - 2022-07-11
 ### Added
 - A right-click context menu is now available in the History tab in order to Select/Set a color for arbitrary messages.
