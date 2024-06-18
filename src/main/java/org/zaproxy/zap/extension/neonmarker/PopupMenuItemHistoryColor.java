@@ -26,6 +26,7 @@ import org.parosproxy.paros.control.Control;
 import org.parosproxy.paros.model.HistoryReference;
 import org.zaproxy.zap.view.popup.PopupMenuItemHistoryReferenceContainer;
 
+@SuppressWarnings("serial")
 public class PopupMenuItemHistoryColor extends PopupMenuItemHistoryReferenceContainer {
 
     private static final long serialVersionUID = 2746419567363361343L;

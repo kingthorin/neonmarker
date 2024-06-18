@@ -63,6 +63,7 @@ import org.parosproxy.paros.view.View;
 import org.zaproxy.zap.extension.pscan.PassiveScanParam;
 import org.zaproxy.zap.view.ZapToggleButton;
 
+@SuppressWarnings("serial")
 class NeonmarkerPanel extends AbstractPanel {
 
     private static final long serialVersionUID = 3053763855777533887L;
@@ -74,7 +75,7 @@ class NeonmarkerPanel extends AbstractPanel {
     private static final String MULTIPLICATION_X = "\u2715";
 
     private Model historyTableModel;
-    private ArrayList<ExtensionNeonmarker.ColorMapping> colormap;
+    private List<ExtensionNeonmarker.ColorMapping> colormap;
     private Container colorSelectionPanel;
     private JToolBar toolbar;
     private JButton clearButton;
@@ -83,7 +84,7 @@ class NeonmarkerPanel extends AbstractPanel {
     private ExtensionHistory extHist =
             Control.getSingleton().getExtensionLoader().getExtension(ExtensionHistory.class);
 
-    NeonmarkerPanel(Model model, ArrayList<ExtensionNeonmarker.ColorMapping> colormap) {
+    NeonmarkerPanel(Model model, List<ExtensionNeonmarker.ColorMapping> colormap) {
         historyTableModel = model;
         this.colormap = colormap;
         initializePanel();
