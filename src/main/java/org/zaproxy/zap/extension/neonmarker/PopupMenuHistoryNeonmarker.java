@@ -25,6 +25,7 @@ public class PopupMenuHistoryNeonmarker extends PopupMenuHistoryReferenceContain
 
     private static final long serialVersionUID = 5126729231139965308L;
 
+    @SuppressWarnings("this-escape")
     public PopupMenuHistoryNeonmarker() {
         super(Constant.messages.getString("neonmarker.popup.label"), true);
         setIcon(ExtensionNeonmarker.getIcon());
