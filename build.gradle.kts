@@ -21,7 +21,7 @@ repositories {
 }
 
 java {
-    val javaVersion = JavaVersion.VERSION_11
+    val javaVersion = JavaVersion.VERSION_17
     sourceCompatibility = javaVersion
     targetCompatibility = javaVersion
 }
@@ -64,7 +64,7 @@ description = "Colors history table items based on tags"
 zapAddOn {
     addOnName.set("Neonmarker")
     addOnStatus.set(AddOnStatus.ALPHA)
-    zapVersion.set("2.10.0")
+    zapVersion.set("2.16.0")
 
     releaseLink.set("https://github.com/kingthorin/neonmarker/compare/v@PREVIOUS_VERSION@...v@CURRENT_VERSION@")
     unreleasedLink.set("https://github.com/kingthorin/neonmarker/compare/v@CURRENT_VERSION@...HEAD")
@@ -79,11 +79,23 @@ zapAddOn {
             baseName.set("help%LC%.helpset")
             localeToken.set("%LC%")
         }
+
+        dependencies {
+            addOns {
+                register("pscan") {
+                    version.set(">=0.2.0")
+                }
+            }
+        }
     }
 
     gitHubRelease {
         user.set(GitHubUser("kingthorin", "kingthorin@users.noreply.github.com", System.getenv("AUTH_TOKEN")))
     }
+}
+
+dependencies {
+    compileOnly("org.zaproxy.addon:pscan:0.2.0")
 }
 
 val projectInfo = ProjectInfo.from(project)

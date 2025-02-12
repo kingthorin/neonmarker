@@ -6,6 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 ### Changed
 - Maintenance changes.
+- Updates to work appropriately with ZAP 2.16 and the Passive Scan Add-on.
 
 ## [1.6.0] - 2023-08-17
 ### Changed

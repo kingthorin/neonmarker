@@ -49,9 +49,4 @@ public class PopupMenuHistoryNeonmarker extends PopupMenuHistoryReferenceContain
     public boolean isSafe() {
         return true;
     }
-
-    @Override
-    public boolean precedeWithSeparator() {
-        return true;
-    }
 }

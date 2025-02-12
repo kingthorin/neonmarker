@@ -24,7 +24,6 @@ import java.awt.EventQueue;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.regex.Pattern;
@@ -43,22 +42,15 @@ import org.parosproxy.paros.extension.ExtensionAdaptor;
 import org.parosproxy.paros.extension.ExtensionHook;
 import org.parosproxy.paros.extension.history.ExtensionHistory;
 import org.parosproxy.paros.model.HistoryReference;
-import org.parosproxy.paros.model.Model;
+import org.zaproxy.addon.pscan.ExtensionPassiveScan2;
 import org.zaproxy.zap.extension.help.ExtensionHelp;
-import org.zaproxy.zap.extension.pscan.PassiveScanParam;
 import org.zaproxy.zap.view.table.HistoryReferencesTableModel;
 
 public class ExtensionNeonmarker extends ExtensionAdaptor {
     private static final Logger LOGGER = LogManager.getLogger(ExtensionNeonmarker.class);
-    private static final Range<Integer> INT_RANGE =
-            Range.between(Integer.MIN_VALUE, Integer.MAX_VALUE);
-    private static final List<Class<? extends Extension>> EXTENSION_DEPENDENCIES;
-
-    static {
-        List<Class<? extends Extension>> dependencies = new ArrayList<>(1);
-        dependencies.add(ExtensionHistory.class);
-        EXTENSION_DEPENDENCIES = Collections.unmodifiableList(dependencies);
-    }
+    private static final Range<Integer> INT_RANGE = Range.of(Integer.MIN_VALUE, Integer.MAX_VALUE);
+    private static final List<Class<? extends Extension>> EXTENSION_DEPENDENCIES =
+            List.of(ExtensionPassiveScan2.class, ExtensionHistory.class);
 
     public static final String NAME = "ExtensionNeonmarker";
     public static final Color PLACEHOLDER = new Color(0, 0, 0, 0);
@@ -167,7 +159,11 @@ public class ExtensionNeonmarker extends ExtensionAdaptor {
     }
 
     private static ExtensionHistory getHistoryExtension() {
-        return Control.getSingleton().getExtensionLoader().getExtension(ExtensionHistory.class);
+        return getExtension(ExtensionHistory.class);
+    }
+
+    private static <T extends Extension> T getExtension(Class<T> clazz) {
+        return Control.getSingleton().getExtensionLoader().getExtension(clazz);
     }
 
     private MarkItemColorHighlighter getHighligher() {
@@ -225,13 +221,7 @@ public class ExtensionNeonmarker extends ExtensionAdaptor {
 
     private static boolean isValidTag(String tag) {
         try {
-            List<String> tags = new ArrayList<>();
-            Model.getSingleton()
-                    .getOptionsParam()
-                    .getParamSet(PassiveScanParam.class)
-                    .getAutoTagScanners()
-                    .forEach(tagger -> tags.add(tagger.getConf()));
-            return tags.contains(tag)
+            return getExtension(ExtensionPassiveScan2.class).getAutoTaggingTags().contains(tag)
                     || getHistoryExtension()
                             .getModel()
                             .getDb()

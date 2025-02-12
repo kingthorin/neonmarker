@@ -56,11 +56,12 @@ import org.parosproxy.paros.Constant;
 import org.parosproxy.paros.control.Control;
 import org.parosproxy.paros.db.DatabaseException;
 import org.parosproxy.paros.extension.AbstractPanel;
+import org.parosproxy.paros.extension.Extension;
 import org.parosproxy.paros.extension.history.ExtensionHistory;
 import org.parosproxy.paros.model.HistoryReference;
 import org.parosproxy.paros.model.Model;
 import org.parosproxy.paros.view.View;
-import org.zaproxy.zap.extension.pscan.PassiveScanParam;
+import org.zaproxy.addon.pscan.ExtensionPassiveScan2;
 import org.zaproxy.zap.view.ZapToggleButton;
 
 @SuppressWarnings("serial")
@@ -81,8 +82,7 @@ class NeonmarkerPanel extends AbstractPanel {
     private JButton clearButton;
     private JButton addButton;
     private ZapToggleButton enableButton;
-    private ExtensionHistory extHist =
-            Control.getSingleton().getExtensionLoader().getExtension(ExtensionHistory.class);
+    private ExtensionHistory extHist = getExtension(ExtensionHistory.class);
 
     NeonmarkerPanel(Model model, List<ExtensionNeonmarker.ColorMapping> colormap) {
         historyTableModel = model;
@@ -411,16 +411,9 @@ class NeonmarkerPanel extends AbstractPanel {
             } catch (Exception e) {
                 // do nothing
             }
-            Model.getSingleton()
-                    .getOptionsParam()
-                    .getParamSet(PassiveScanParam.class)
-                    .getAutoTagScanners()
-                    .forEach(
-                            tagger -> {
-                                if (!allTags.contains(tagger.getConf())) {
-                                    allTags.add(tagger.getConf());
-                                }
-                            });
+            getExtension(ExtensionPassiveScan2.class).getAutoTaggingTags().stream()
+                    .filter(e -> !allTags.contains(e))
+                    .forEach(allTags::add);
             if (allTags.isEmpty()) {
                 allTags.add(Constant.messages.getString("neonmarker.panel.mapping.notags"));
             }
@@ -491,5 +484,9 @@ class NeonmarkerPanel extends AbstractPanel {
             graphics.fillRect(0, 0, img.getWidth(), img.getHeight());
             return new ImageIcon(img);
         }
+    }
+
+    private static <T extends Extension> T getExtension(Class<T> clazz) {
+        return Control.getSingleton().getExtensionLoader().getExtension(clazz);
     }
 }
