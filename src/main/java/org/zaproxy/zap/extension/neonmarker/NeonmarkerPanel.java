@@ -402,7 +402,7 @@ class NeonmarkerPanel extends AbstractPanel {
 
         TagListModel() {
             listDataListeners = new ArrayList<>();
-            updateTags();
+            allTags = List.of();
         }
 
         private void updateTags() {
