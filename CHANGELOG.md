@@ -3,6 +3,9 @@ All notable changes to this add-on will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [Unreleased]
+
+
 ## [1.8.0] - 2025-02-14
 ### Changed
 - Adjust initialization of the Tags list 
@@ -61,6 +64,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 Initial laser version.
 
+[Unreleased]: https://github.com/kingthorin/neonmarker/compare/v1.8.0...HEAD
 [1.8.0]: https://github.com/kingthorin/neonmarker/compare/v1.7.0...v1.8.0
 [1.7.0]: https://github.com/kingthorin/neonmarker/compare/v1.6.0...v1.7.0
 [1.6.0]: https://github.com/kingthorin/neonmarker/compare/v1.5.0...v1.6.0
