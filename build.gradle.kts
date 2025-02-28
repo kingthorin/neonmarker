@@ -9,11 +9,11 @@ import org.zaproxy.gradle.addon.misc.ConvertMarkdownToHtml
 
 plugins {
     id("com.diffplug.spotless") version "6.25.0"
-    id("com.github.ben-manes.versions") version "0.51.0"
-    id("net.ltgt.errorprone") version "4.0.0"
+    id("com.github.ben-manes.versions") version "0.52.0"
+    id("net.ltgt.errorprone") version "4.1.0"
     `java-library`
-    id("org.zaproxy.add-on") version "0.12.0"
-    id("org.zaproxy.common") version "0.3.0"
+    id("org.zaproxy.add-on") version "0.13.1"
+    id("org.zaproxy.common") version "0.5.0"
 }
 
 repositories {
@@ -27,7 +27,7 @@ java {
 }
 
 dependencies {
-    "errorprone"("com.google.errorprone:error_prone_core:2.28.0")
+    "errorprone"("com.google.errorprone:error_prone_core:2.36.0")
 }
 
 spotless {
@@ -37,7 +37,7 @@ spotless {
     java {
         // Don't enforce the license, just the format.
         clearSteps()
-        googleJavaFormat("1.17.0").aosp()
+        googleJavaFormat("1.25.2").aosp()
     }
     format("html", {
         eclipseWtp(EclipseWtpFormatterStep.HTML)
