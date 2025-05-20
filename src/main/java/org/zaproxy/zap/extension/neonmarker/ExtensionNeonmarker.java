@@ -320,10 +320,9 @@ public class ExtensionNeonmarker extends ExtensionAdaptor {
             if (this == obj) {
                 return true;
             }
-            if (!(obj instanceof ColorMapping)) {
+            if (!(obj instanceof ColorMapping other)) {
                 return false;
             }
-            ColorMapping other = (ColorMapping) obj;
             return Objects.equals(color, other.color) && Objects.equals(tag, other.tag);
         }
     }

@@ -10,7 +10,7 @@ import org.zaproxy.gradle.addon.misc.ConvertMarkdownToHtml
 plugins {
     id("com.diffplug.spotless") version "6.25.0"
     id("com.github.ben-manes.versions") version "0.52.0"
-    id("net.ltgt.errorprone") version "4.1.0"
+    id("net.ltgt.errorprone") version "4.2.0"
     `java-library`
     id("org.zaproxy.add-on") version "0.13.1"
     id("org.zaproxy.common") version "0.5.0"
@@ -27,7 +27,7 @@ java {
 }
 
 dependencies {
-    "errorprone"("com.google.errorprone:error_prone_core:2.36.0")
+    "errorprone"("com.google.errorprone:error_prone_core:2.38.0")
 }
 
 spotless {

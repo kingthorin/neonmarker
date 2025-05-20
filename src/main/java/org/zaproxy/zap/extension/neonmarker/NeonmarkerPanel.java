@@ -319,18 +319,13 @@ class NeonmarkerPanel extends AbstractPanel {
                     String tag = colormap.get(ruleNumber).getTag();
                     if (tag != null && ExtensionNeonmarker.TAG_PATTERN.matcher(tag).matches()) {
                         switch (getRemovalChoice()) {
-                            case JOptionPane.CANCEL_OPTION:
-                            case JOptionPane.CLOSED_OPTION:
-                                return;
-                            case JOptionPane.NO_OPTION:
-                                removeMapping(ruleNumber);
-                                break;
-                            case JOptionPane.YES_OPTION:
+                            case JOptionPane.CANCEL_OPTION, JOptionPane.CLOSED_OPTION -> {}
+                            case JOptionPane.NO_OPTION -> removeMapping(ruleNumber);
+                            case JOptionPane.YES_OPTION -> {
                                 removeTagFromHistoryTable(tag);
                                 removeMapping(ruleNumber);
-                                break;
-                            default:
-                                return;
+                            }
+                            default -> {}
                         }
                     } else {
                         removeMapping(ruleNumber);
