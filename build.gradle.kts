@@ -37,7 +37,7 @@ spotless {
     java {
         // Don't enforce the license, just the format.
         clearSteps()
-        googleJavaFormat("1.25.2").aosp()
+        googleJavaFormat("1.28.0").aosp()
     }
     format("html", {
         eclipseWtp(EclipseWtpFormatterStep.HTML)
