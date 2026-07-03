@@ -8,6 +8,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - History row selection is shown over highlight colours.
 - Highlighted rows use contrasting text for readability.
 
+### Added
+- "To Top" and "To Bottom" buttons for rule precedence.
+
 ## [1.8.0] - 2025-02-14
 ### Changed
 - Adjust initialization of the Tags list 

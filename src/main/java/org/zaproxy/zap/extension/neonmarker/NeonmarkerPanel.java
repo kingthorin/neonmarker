@@ -205,9 +205,13 @@ class NeonmarkerPanel extends AbstractPanel {
             c.gridx++;
             colorSelectionPanel.add(getTagComboBox(rule), c);
             c.gridx++;
+            colorSelectionPanel.add(getMoveToEndButton(c.gridy, true), c);
+            c.gridx++;
             colorSelectionPanel.add(getMoveButton(c.gridy, true), c);
             c.gridx++;
             colorSelectionPanel.add(getMoveButton(c.gridy, false), c);
+            c.gridx++;
+            colorSelectionPanel.add(getMoveToEndButton(c.gridy, false), c);
             c.gridx++;
             colorSelectionPanel.add(getRemoveButton(c.gridy), c);
             c.gridy++;
@@ -230,6 +234,35 @@ class NeonmarkerPanel extends AbstractPanel {
         move.addActionListener(
                 e -> {
                     Collections.swap(colormap, ruleNumber, up ? ruleNumber - 1 : ruleNumber + 1);
+                    refreshDisplay();
+                });
+        return move;
+    }
+
+    private Component getMoveToEndButton(int ruleNumber, boolean top) {
+        JButton move =
+                new JButton(
+                        Constant.messages.getString(
+                                top
+                                        ? "neonmarker.panel.mapping.move.top.label"
+                                        : "neonmarker.panel.mapping.move.bottom.label"));
+        int lastIndex = colormap.size() - 1;
+        if ((top && ruleNumber == 0) || (!top && ruleNumber == lastIndex)) {
+            move.setEnabled(false);
+        }
+        move.setToolTipText(
+                Constant.messages.getString(
+                        top
+                                ? "neonmarker.panel.mapping.move.top"
+                                : "neonmarker.panel.mapping.move.bottom"));
+        move.addActionListener(
+                e -> {
+                    ExtensionNeonmarker.ColorMapping rule = colormap.remove(ruleNumber);
+                    if (top) {
+                        colormap.add(0, rule);
+                    } else {
+                        colormap.add(rule);
+                    }
                     refreshDisplay();
                 });
         return move;
