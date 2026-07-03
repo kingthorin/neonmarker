@@ -18,7 +18,6 @@
 package org.zaproxy.zap.extension.neonmarker;
 
 import java.util.List;
-import java.util.stream.Collectors;
 import org.parosproxy.paros.model.HistoryReference;
 import org.zaproxy.zap.view.popup.PopupMenuItemHistoryReferenceContainer;
 
@@ -41,7 +40,7 @@ public class PopupMenuItemHistoryUntag extends PopupMenuItemHistoryReferenceCont
                                                     !ExtensionNeonmarker.TAG_PATTERN
                                                             .matcher(tag)
                                                             .matches())
-                                    .collect(Collectors.toList());
+                                    .toList();
                     hr.setTags(tagsBeingKept);
                 });
     }
