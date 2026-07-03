@@ -96,6 +96,15 @@ zapAddOn {
 
 dependencies {
     compileOnly("org.zaproxy.addon:pscan:0.2.0")
+
+    testImplementation("org.junit.jupiter:junit-jupiter:6.1.0")
+    testImplementation("org.hamcrest:hamcrest-library:3.0")
+
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+}
+
+tasks.test {
+    useJUnitPlatform()
 }
 
 val projectInfo = ProjectInfo.from(project)
