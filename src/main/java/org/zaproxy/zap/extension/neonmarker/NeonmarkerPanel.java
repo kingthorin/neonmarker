@@ -205,13 +205,13 @@ class NeonmarkerPanel extends AbstractPanel {
             c.gridx++;
             colorSelectionPanel.add(getTagComboBox(rule), c);
             c.gridx++;
-            colorSelectionPanel.add(getMoveToEndButton(c.gridy, true), c);
+            colorSelectionPanel.add(getMoveAbsoluteButton(c.gridy, true), c);
             c.gridx++;
             colorSelectionPanel.add(getMoveButton(c.gridy, true), c);
             c.gridx++;
             colorSelectionPanel.add(getMoveButton(c.gridy, false), c);
             c.gridx++;
-            colorSelectionPanel.add(getMoveToEndButton(c.gridy, false), c);
+            colorSelectionPanel.add(getMoveAbsoluteButton(c.gridy, false), c);
             c.gridx++;
             colorSelectionPanel.add(getRemoveButton(c.gridy), c);
             c.gridy++;
@@ -239,7 +239,7 @@ class NeonmarkerPanel extends AbstractPanel {
         return move;
     }
 
-    private Component getMoveToEndButton(int ruleNumber, boolean top) {
+    private Component getMoveAbsoluteButton(int ruleNumber, boolean top) {
         JButton move =
                 new JButton(
                         Constant.messages.getString(
