@@ -33,7 +33,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jdesktop.swingx.decorator.AbstractHighlighter;
 import org.jdesktop.swingx.decorator.ComponentAdapter;
-import org.jdesktop.swingx.decorator.HighlightPredicate;
 import org.parosproxy.paros.Constant;
 import org.parosproxy.paros.control.Control;
 import org.parosproxy.paros.db.DatabaseException;
@@ -244,7 +243,7 @@ public class ExtensionNeonmarker extends ExtensionAdaptor {
 
         MarkItemColorHighlighter(ExtensionHistory extHistory, int idColumnIndex) {
             super();
-            setHighlightPredicate(HighlightPredicate.ALWAYS);
+            setHighlightPredicate((renderer, adapter) -> !adapter.isSelected());
             this.extHistory = extHistory;
             this.idColumnIndex = idColumnIndex;
         }
