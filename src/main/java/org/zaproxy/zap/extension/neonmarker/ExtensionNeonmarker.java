@@ -263,6 +263,7 @@ public class ExtensionNeonmarker extends ExtensionAdaptor {
             Color mark = mapTagsToColor(tags);
             if (mark != null) {
                 component.setBackground(mark);
+                component.setForeground(NeonmarkerColorUtils.contrastingForeground(mark));
             }
             return component;
         }
