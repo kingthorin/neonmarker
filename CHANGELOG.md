@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 - History row selection is shown over highlight colours.
 - Highlighted rows use contrasting text for readability.
+- Maintenance changes.
 
 ### Added
 - "To Top" and "To Bottom" buttons for rule precedence.

@@ -29,8 +29,10 @@ import java.awt.event.ItemEvent;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
-import javax.swing.ComboBoxModel;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JColorChooser;
@@ -46,22 +48,19 @@ import javax.swing.ListCellRenderer;
 import javax.swing.SwingConstants;
 import javax.swing.SwingWorker;
 import javax.swing.border.EmptyBorder;
-import javax.swing.event.ListDataEvent;
-import javax.swing.event.ListDataListener;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.parosproxy.paros.Constant;
-import org.parosproxy.paros.control.Control;
 import org.parosproxy.paros.db.DatabaseException;
 import org.parosproxy.paros.extension.AbstractPanel;
-import org.parosproxy.paros.extension.Extension;
 import org.parosproxy.paros.extension.history.ExtensionHistory;
 import org.parosproxy.paros.model.HistoryReference;
 import org.parosproxy.paros.model.Model;
 import org.parosproxy.paros.view.View;
 import org.zaproxy.addon.pscan.ExtensionPassiveScan2;
+import org.zaproxy.zap.utils.DisplayUtils;
 import org.zaproxy.zap.view.ZapToggleButton;
 
 @SuppressWarnings("serial")
@@ -78,15 +77,13 @@ class NeonmarkerPanel extends AbstractPanel {
     private Model historyTableModel;
     private List<ExtensionNeonmarker.ColorMapping> colormap;
     private Container colorSelectionPanel;
-    private JToolBar toolbar;
-    private JButton clearButton;
-    private JButton addButton;
     private ZapToggleButton enableButton;
-    private ExtensionHistory extHist = getExtension(ExtensionHistory.class);
+    private ExtensionHistory extHist;
 
     NeonmarkerPanel(Model model, List<ExtensionNeonmarker.ColorMapping> colormap) {
         historyTableModel = model;
         this.colormap = colormap;
+        extHist = ExtensionNeonmarker.getExtension(ExtensionHistory.class);
         initializePanel();
     }
 
@@ -94,97 +91,76 @@ class NeonmarkerPanel extends AbstractPanel {
         setName(Constant.messages.getString("neonmarker.panel.title"));
         setIcon(ExtensionNeonmarker.getIcon());
         setLayout(new BorderLayout());
-        add(getPanelToolbar(), BorderLayout.PAGE_START);
+
+        JToolBar toolbar = new JToolBar();
+        toolbar.setEnabled(true);
+        toolbar.setFloatable(false);
+        toolbar.setRollover(true);
+
+        JButton clearButton = new JButton();
+        clearButton.setEnabled(true);
+        clearButton.setIcon(
+                DisplayUtils.getScaledIcon(
+                        NeonmarkerPanel.class.getResource("/resource/icon/fugue/broom.png")));
+        clearButton.setToolTipText(Constant.messages.getString("neonmarker.panel.button.clear"));
+        clearButton.addActionListener(actionEvent -> clearColorSelectionPanel());
+        toolbar.add(clearButton);
+
+        JButton addButton = new JButton();
+        addButton.setEnabled(true);
+        addButton.setIcon(
+                DisplayUtils.getScaledIcon(
+                        NeonmarkerPanel.class.getResource("/resource/icon/16/103.png")));
+        addButton.setToolTipText(Constant.messages.getString("neonmarker.panel.button.add"));
+        addButton.addActionListener(
+                actionEvent -> {
+                    colormap.add(new ExtensionNeonmarker.ColorMapping());
+                    refreshDisplay();
+                });
+        toolbar.add(addButton);
+        toolbar.add(new JSeparator(SwingConstants.VERTICAL));
+
+        enableButton =
+                new ZapToggleButton(
+                        Constant.messages.getString(
+                                "neonmarker.panel.toolbar.toggle.button.label.enabled"),
+                        true);
+        enableButton.setIcon(
+                DisplayUtils.getScaledIcon(
+                        NeonmarkerPanel.class.getResource(
+                                ExtensionNeonmarker.RESOURCE + "/off.png")));
+        enableButton.setToolTipText(
+                Constant.messages.getString(
+                        "neonmarker.panel.toolbar.toggle.button.tooltip.disabled"));
+        enableButton.setSelectedIcon(
+                DisplayUtils.getScaledIcon(
+                        NeonmarkerPanel.class.getResource(
+                                ExtensionNeonmarker.RESOURCE + "/on.png")));
+        enableButton.setSelectedToolTipText(
+                Constant.messages.getString(
+                        "neonmarker.panel.toolbar.toggle.button.tooltip.enabled"));
+        enableButton.addItemListener(
+                event -> {
+                    if (event.getStateChange() == ItemEvent.SELECTED) {
+                        enableButton.setText(
+                                Constant.messages.getString(
+                                        "neonmarker.panel.toolbar.toggle.button.label.enabled"));
+                    } else {
+                        enableButton.setText(
+                                Constant.messages.getString(
+                                        "neonmarker.panel.toolbar.toggle.button.label.disabled"));
+                    }
+                    ExtensionNeonmarker.getExtension(ExtensionNeonmarker.class)
+                            .toggleHighlighter(enableButton.isSelected());
+                });
+        toolbar.add(enableButton);
+
+        add(toolbar, BorderLayout.PAGE_START);
 
         colorSelectionPanel = new JPanel();
         colorSelectionPanel.setLayout(new GridBagLayout());
         add(new JScrollPane(colorSelectionPanel), BorderLayout.CENTER);
         clearColorSelectionPanel();
-    }
-
-    private Component getPanelToolbar() {
-        if (toolbar == null) {
-            toolbar = new JToolBar();
-            toolbar.setEnabled(true);
-            toolbar.setFloatable(false);
-            toolbar.setRollover(true);
-            toolbar.add(getClearButton());
-            toolbar.add(getAddButton());
-            toolbar.add(new JSeparator(SwingConstants.VERTICAL));
-            toolbar.add(getEnableToggleButton());
-        }
-        return toolbar;
-    }
-
-    private Component getClearButton() {
-        if (clearButton == null) {
-            clearButton = new JButton();
-            clearButton.setEnabled(true);
-            clearButton.setIcon(
-                    new ImageIcon(
-                            NeonmarkerPanel.class.getResource("/resource/icon/fugue/broom.png")));
-            clearButton.setToolTipText(
-                    Constant.messages.getString("neonmarker.panel.button.clear"));
-            clearButton.addActionListener(actionEvent -> clearColorSelectionPanel());
-        }
-        return clearButton;
-    }
-
-    private Component getAddButton() {
-        if (addButton == null) {
-            addButton = new JButton();
-            addButton.setEnabled(true);
-            addButton.setIcon(
-                    new ImageIcon(NeonmarkerPanel.class.getResource("/resource/icon/16/103.png")));
-            addButton.setToolTipText(Constant.messages.getString("neonmarker.panel.button.add"));
-            addButton.addActionListener(
-                    actionEvent -> {
-                        colormap.add(new ExtensionNeonmarker.ColorMapping());
-                        refreshDisplay();
-                    });
-        }
-        return addButton;
-    }
-
-    private ZapToggleButton getEnableToggleButton() {
-        if (enableButton == null) {
-            enableButton =
-                    new ZapToggleButton(
-                            Constant.messages.getString(
-                                    "neonmarker.panel.toolbar.toggle.button.label.enabled"),
-                            true);
-            enableButton.setIcon(
-                    new ImageIcon(
-                            NeonmarkerPanel.class.getResource(
-                                    ExtensionNeonmarker.RESOURCE + "/off.png")));
-            enableButton.setToolTipText(
-                    Constant.messages.getString(
-                            "neonmarker.panel.toolbar.toggle.button.tooltip.disabled"));
-            enableButton.setSelectedIcon(
-                    new ImageIcon(
-                            NeonmarkerPanel.class.getResource(
-                                    ExtensionNeonmarker.RESOURCE + "/on.png")));
-            enableButton.setSelectedToolTipText(
-                    Constant.messages.getString(
-                            "neonmarker.panel.toolbar.toggle.button.tooltip.enabled"));
-            enableButton.addItemListener(
-                    event -> {
-                        if (event.getStateChange() == ItemEvent.SELECTED) {
-                            enableButton.setText(
-                                    Constant.messages.getString(
-                                            "neonmarker.panel.toolbar.toggle.button.label.enabled"));
-                        } else {
-                            enableButton.setText(
-                                    Constant.messages.getString(
-                                            "neonmarker.panel.toolbar.toggle.button.label.disabled"));
-                        }
-                        Control.getSingleton()
-                                .getExtensionLoader()
-                                .getExtension(ExtensionNeonmarker.class)
-                                .toggleHighlighter(enableButton.isSelected());
-                    });
-        }
-        return enableButton;
     }
 
     private void clearColorSelectionPanel() {
@@ -304,39 +280,74 @@ class NeonmarkerPanel extends AbstractPanel {
     }
 
     private Component getTagComboBox(ExtensionNeonmarker.ColorMapping rule) {
-        TagListModel tagListModel = new TagListModel();
-        tagListModel.updateTags();
-        JComboBox<String> tagSelect = new JComboBox<>(tagListModel);
+        JComboBox<String> tagSelect = new JComboBox<>();
+        populateTagComboBox(tagSelect);
+        tagSelect.setSelectedItem(rule.getTag());
+        final AtomicBoolean refreshingTags = new AtomicBoolean(false);
         tagSelect.addPopupMenuListener(
                 new PopupMenuListener() {
                     @Override
                     public void popupMenuWillBecomeVisible(PopupMenuEvent popupMenuEvent) {
-                        ((TagListModel) tagSelect.getModel()).updateTags();
+                        refreshingTags.set(true);
+                        try {
+                            String selected = (String) tagSelect.getSelectedItem();
+                            tagSelect.removeAllItems();
+                            List<String> tags = populateTagComboBox(tagSelect);
+                            String tagToRestore = selected != null ? selected : rule.getTag();
+                            if (tagToRestore != null && !tags.contains(tagToRestore)) {
+                                tagSelect.insertItemAt(tagToRestore, 0);
+                            }
+                            if (tagToRestore != null) {
+                                tagSelect.setSelectedItem(tagToRestore);
+                            }
+                        } finally {
+                            refreshingTags.set(false);
+                        }
                     }
 
                     @Override
-                    public void popupMenuWillBecomeInvisible(PopupMenuEvent popupMenuEvent) {
-                        // Nothing to do
-                    }
+                    public void popupMenuWillBecomeInvisible(PopupMenuEvent popupMenuEvent) {}
 
                     @Override
-                    public void popupMenuCanceled(PopupMenuEvent popupMenuEvent) {
-                        // Nothing to do
-                    }
+                    public void popupMenuCanceled(PopupMenuEvent popupMenuEvent) {}
                 });
-        tagSelect.setSelectedItem(rule.getTag());
         tagSelect.addActionListener(
                 actionEvent -> {
+                    if (refreshingTags.get()) {
+                        return;
+                    }
                     rule.setTag((String) tagSelect.getSelectedItem());
                     repaintHistoryTable();
                 });
         return tagSelect;
     }
 
+    private List<String> populateTagComboBox(JComboBox<String> tagSelect) {
+        List<String> tags = loadTags();
+        for (String tag : tags) {
+            tagSelect.addItem(tag);
+        }
+        return tags;
+    }
+
+    private List<String> loadTags() {
+        List<String> allTags = new ArrayList<>();
+        try {
+            allTags.addAll(historyTableModel.getDb().getTableTag().getAllTags());
+        } catch (DatabaseException e) {
+            LOGGER.debug("Failed to load tags from DB, falling back to pscan auto-tags.", e);
+        }
+        ExtensionNeonmarker.getExtension(ExtensionPassiveScan2.class).getAutoTaggingTags().stream()
+                .filter(tag -> !allTags.contains(tag))
+                .forEach(allTags::add);
+        if (allTags.isEmpty()) {
+            allTags.add(Constant.messages.getString("neonmarker.panel.mapping.notags"));
+        }
+        return allTags;
+    }
+
     private static void repaintHistoryTable() {
-        Control.getSingleton()
-                .getExtensionLoader()
-                .getExtension(ExtensionHistory.class)
+        ExtensionNeonmarker.getExtension(ExtensionHistory.class)
                 .getHistoryReferencesTable()
                 .repaint();
     }
@@ -411,82 +422,20 @@ class NeonmarkerPanel extends AbstractPanel {
     }
 
     private void removeTagFromHistoryTable(String tag) {
-        SwingWorker<Void, Void> remove =
-                new SwingWorker<Void, Void>() {
-                    @Override
-                    protected Void doInBackground() {
-                        for (int id : getHistoryIds()) {
-                            HistoryReference hr = extHist.getHistoryReference(id);
-                            hr.deleteTag(tag);
-                        }
-                        return null;
-                    }
-                };
-        remove.execute();
-    }
-
-    /**
-     * A list model that dynamically gets all the tags that ZAP has given to any messages in the
-     * history
-     */
-    private class TagListModel implements ComboBoxModel<String> {
-        private List<String> allTags;
-        private ArrayList<ListDataListener> listDataListeners;
-        private Object selectedItem;
-
-        TagListModel() {
-            listDataListeners = new ArrayList<>();
-            allTags = List.of();
-        }
-
-        private void updateTags() {
-            try {
-                allTags = new ArrayList<>(historyTableModel.getDb().getTableTag().getAllTags());
-            } catch (Exception e) {
-                allTags = new ArrayList<>();
+        new SwingWorker<Void, Void>() {
+            @Override
+            protected Void doInBackground() {
+                for (int id : getHistoryIds()) {
+                    extHist.getHistoryReference(id).deleteTag(tag);
+                }
+                return null;
             }
-            getExtension(ExtensionPassiveScan2.class).getAutoTaggingTags().stream()
-                    .filter(e -> !allTags.contains(e))
-                    .forEach(allTags::add);
-            if (allTags.isEmpty()) {
-                allTags.add(Constant.messages.getString("neonmarker.panel.mapping.notags"));
+
+            @Override
+            protected void done() {
+                repaintHistoryTable();
             }
-            for (ListDataListener l : listDataListeners) {
-                l.contentsChanged(
-                        new ListDataEvent(
-                                this, ListDataEvent.CONTENTS_CHANGED, 0, allTags.size() - 1));
-            }
-        }
-
-        @Override
-        public int getSize() {
-            return allTags.size();
-        }
-
-        @Override
-        public String getElementAt(int i) {
-            return allTags.get(i);
-        }
-
-        @Override
-        public void addListDataListener(ListDataListener listDataListener) {
-            listDataListeners.add(listDataListener);
-        }
-
-        @Override
-        public void removeListDataListener(ListDataListener listDataListener) {
-            listDataListeners.remove(listDataListener);
-        }
-
-        @Override
-        public void setSelectedItem(Object o) {
-            selectedItem = o;
-        }
-
-        @Override
-        public Object getSelectedItem() {
-            return selectedItem;
-        }
+        }.execute();
     }
 
     /**
@@ -496,6 +445,11 @@ class NeonmarkerPanel extends AbstractPanel {
     private static class ColorListRenderer extends JLabel implements ListCellRenderer<Object> {
 
         private static final long serialVersionUID = -5808258749585681496L;
+
+        // Unbounded swatch cache (final map reference, mutable entries). Fine for the fixed
+        // palette plus occasional custom colours; revisit if many temporary colours are added
+        // programmatically.
+        private static final Map<Color, ImageIcon> COLOR_ICONS = new HashMap<>();
 
         @Override
         public Component getListCellRendererComponent(
@@ -512,15 +466,16 @@ class NeonmarkerPanel extends AbstractPanel {
         }
 
         private static ImageIcon getColorIcon(Color color) {
-            BufferedImage img = new BufferedImage(100, 16, BufferedImage.TYPE_INT_RGB);
-            Graphics graphics = img.createGraphics();
-            graphics.setColor(color);
-            graphics.fillRect(0, 0, img.getWidth(), img.getHeight());
-            return new ImageIcon(img);
+            return COLOR_ICONS.computeIfAbsent(
+                    color,
+                    c -> {
+                        BufferedImage img = new BufferedImage(100, 16, BufferedImage.TYPE_INT_RGB);
+                        Graphics graphics = img.createGraphics();
+                        graphics.setColor(c);
+                        graphics.fillRect(0, 0, img.getWidth(), img.getHeight());
+                        graphics.dispose();
+                        return DisplayUtils.getScaledIcon(new ImageIcon(img));
+                    });
         }
-    }
-
-    private static <T extends Extension> T getExtension(Class<T> clazz) {
-        return Control.getSingleton().getExtensionLoader().getExtension(clazz);
     }
 }

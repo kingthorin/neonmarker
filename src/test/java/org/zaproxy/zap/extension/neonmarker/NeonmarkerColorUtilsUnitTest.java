@@ -17,8 +17,7 @@
  */
 package org.zaproxy.zap.extension.neonmarker;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.awt.Color;
 import org.junit.jupiter.api.Test;
@@ -31,7 +30,7 @@ class NeonmarkerColorUtilsUnitTest {
         // Given / When
         Color foreground = NeonmarkerColorUtils.contrastingForeground(Color.YELLOW);
         // Then
-        assertThat(foreground, is(Color.BLACK));
+        assertEquals(Color.BLACK, foreground);
     }
 
     @Test
@@ -39,7 +38,7 @@ class NeonmarkerColorUtilsUnitTest {
         // Given / When
         Color foreground = NeonmarkerColorUtils.contrastingForeground(Color.BLUE);
         // Then
-        assertThat(foreground, is(Color.WHITE));
+        assertEquals(Color.WHITE, foreground);
     }
 
     @Test
@@ -47,6 +46,6 @@ class NeonmarkerColorUtilsUnitTest {
         // Given / When
         Color foreground = NeonmarkerColorUtils.contrastingForeground(Color.BLACK);
         // Then
-        assertThat(foreground, is(Color.WHITE));
+        assertEquals(Color.WHITE, foreground);
     }
 }
