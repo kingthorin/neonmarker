@@ -305,6 +305,7 @@ class NeonmarkerPanel extends AbstractPanel {
 
     private Component getTagComboBox(ExtensionNeonmarker.ColorMapping rule) {
         TagListModel tagListModel = new TagListModel();
+        tagListModel.updateTags();
         JComboBox<String> tagSelect = new JComboBox<>(tagListModel);
         tagSelect.addPopupMenuListener(
                 new PopupMenuListener() {
@@ -323,12 +324,12 @@ class NeonmarkerPanel extends AbstractPanel {
                         // Nothing to do
                     }
                 });
+        tagSelect.setSelectedItem(rule.getTag());
         tagSelect.addActionListener(
                 actionEvent -> {
                     rule.setTag((String) tagSelect.getSelectedItem());
                     repaintHistoryTable();
                 });
-        tagSelect.setSelectedItem(rule.getTag());
         return tagSelect;
     }
 
@@ -440,9 +441,9 @@ class NeonmarkerPanel extends AbstractPanel {
 
         private void updateTags() {
             try {
-                allTags = historyTableModel.getDb().getTableTag().getAllTags();
+                allTags = new ArrayList<>(historyTableModel.getDb().getTableTag().getAllTags());
             } catch (Exception e) {
-                // do nothing
+                allTags = new ArrayList<>();
             }
             getExtension(ExtensionPassiveScan2.class).getAutoTaggingTags().stream()
                     .filter(e -> !allTags.contains(e))
