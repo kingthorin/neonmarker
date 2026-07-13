@@ -22,7 +22,6 @@ import java.util.List;
 import java.util.UUID;
 import javax.swing.JColorChooser;
 import org.parosproxy.paros.Constant;
-import org.parosproxy.paros.control.Control;
 import org.parosproxy.paros.model.HistoryReference;
 import org.zaproxy.zap.view.popup.PopupMenuItemHistoryReferenceContainer;
 
@@ -30,9 +29,6 @@ import org.zaproxy.zap.view.popup.PopupMenuItemHistoryReferenceContainer;
 public class PopupMenuItemHistoryColor extends PopupMenuItemHistoryReferenceContainer {
 
     private static final long serialVersionUID = 2746419567363361343L;
-
-    private ExtensionNeonmarker extNeon =
-            Control.getSingleton().getExtensionLoader().getExtension(ExtensionNeonmarker.class);
 
     public PopupMenuItemHistoryColor(String label) {
         super(label, true);
@@ -45,9 +41,15 @@ public class PopupMenuItemHistoryColor extends PopupMenuItemHistoryReferenceCont
                         this,
                         Constant.messages.getString("neonmarker.panel.color.chooser.title"),
                         Color.WHITE);
+        if (newColor == null) {
+            return;
+        }
         String uuid = ExtensionNeonmarker.TAG_PREFIX + UUID.randomUUID().toString();
+        if (!ExtensionNeonmarker.getExtension(ExtensionNeonmarker.class)
+                .addColorMapping(uuid, newColor.getRGB())) {
+            return;
+        }
         hrefs.forEach(hr -> hr.addTag(uuid));
-        extNeon.addColorMapping(uuid, newColor.getRGB());
     }
 
     @Override

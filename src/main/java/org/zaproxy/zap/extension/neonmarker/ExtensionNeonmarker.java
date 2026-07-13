@@ -21,14 +21,12 @@ package org.zaproxy.zap.extension.neonmarker;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.EventQueue;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.regex.Pattern;
 import javax.swing.ImageIcon;
-import org.apache.commons.lang3.Range;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jdesktop.swingx.decorator.AbstractHighlighter;
@@ -43,11 +41,11 @@ import org.parosproxy.paros.extension.history.ExtensionHistory;
 import org.parosproxy.paros.model.HistoryReference;
 import org.zaproxy.addon.pscan.ExtensionPassiveScan2;
 import org.zaproxy.zap.extension.help.ExtensionHelp;
+import org.zaproxy.zap.utils.DisplayUtils;
 import org.zaproxy.zap.view.table.HistoryReferencesTableModel;
 
 public class ExtensionNeonmarker extends ExtensionAdaptor {
     private static final Logger LOGGER = LogManager.getLogger(ExtensionNeonmarker.class);
-    private static final Range<Integer> INT_RANGE = Range.of(Integer.MIN_VALUE, Integer.MAX_VALUE);
     private static final List<Class<? extends Extension>> EXTENSION_DEPENDENCIES =
             List.of(ExtensionPassiveScan2.class, ExtensionHistory.class);
 
@@ -145,43 +143,44 @@ public class ExtensionNeonmarker extends ExtensionAdaptor {
 
     NeonmarkerPanel getNeonmarkerPanel() {
         if (neonmarkerPanel == null) {
-            neonmarkerPanel = new NeonmarkerPanel(getHistoryExtension().getModel(), colormap);
+            neonmarkerPanel =
+                    new NeonmarkerPanel(getExtension(ExtensionHistory.class).getModel(), colormap);
         }
         return neonmarkerPanel;
     }
 
     static ImageIcon getIcon() {
         if (icon == null) {
-            icon = new ImageIcon(ExtensionNeonmarker.class.getResource(RESOURCE + "/spectrum.png"));
+            icon =
+                    DisplayUtils.getScaledIcon(
+                            ExtensionNeonmarker.class.getResource(RESOURCE + "/spectrum.png"));
         }
         return icon;
     }
 
-    private static ExtensionHistory getHistoryExtension() {
-        return getExtension(ExtensionHistory.class);
-    }
-
-    private static <T extends Extension> T getExtension(Class<T> clazz) {
+    static <T extends Extension> T getExtension(Class<T> clazz) {
         return Control.getSingleton().getExtensionLoader().getExtension(clazz);
     }
 
-    private MarkItemColorHighlighter getHighligher() {
+    private MarkItemColorHighlighter getHighlighter() {
         if (highlighter == null) {
+            ExtensionHistory extHistory = getExtension(ExtensionHistory.class);
             int idColumnIndex =
-                    getHistoryExtension()
+                    extHistory
                             .getHistoryReferencesTable()
                             .getModel()
                             .getColumnIndex(HistoryReferencesTableModel.Column.HREF_ID);
-            highlighter = new MarkItemColorHighlighter(getHistoryExtension(), idColumnIndex);
+            highlighter = new MarkItemColorHighlighter(extHistory, idColumnIndex);
         }
         return highlighter;
     }
 
     protected void toggleHighlighter(boolean on) {
+        ExtensionHistory extHistory = getExtension(ExtensionHistory.class);
         if (on) {
-            getHistoryExtension().getHistoryReferencesTable().setHighlighters(getHighligher());
+            extHistory.getHistoryReferencesTable().setHighlighters(getHighlighter());
         } else {
-            getHistoryExtension().getHistoryReferencesTable().removeHighlighter(getHighligher());
+            extHistory.getHistoryReferencesTable().removeHighlighter(getHighlighter());
         }
     }
 
@@ -189,39 +188,44 @@ public class ExtensionNeonmarker extends ExtensionAdaptor {
      * Allows the addition of a color mapping between a {@code Color} and passive scan Tag.
      *
      * @param tag the name of the tag to be mapped.
-     * @param color the {@code int} representation of the color to be mapped
+     * @param color opaque RGB as {@code 0xRRGGBB} (e.g. {@code 0x990000}), or a value from {@link
+     *     Color#getRGB()} (alpha component is ignored; colour is treated as opaque)
      * @return whether or not the addition of the color mapping was successful ({@code true} if it
      *     was, {@code false} otherwise).
      */
     public boolean addColorMapping(String tag, int color) {
-        if (isValidTag(tag) && isValidColor(color)) {
-            Color newColor = new Color(color);
-            ColorMapping newMapping = new ColorMapping(tag, newColor);
-            if (!getColorMap().contains(newMapping)) {
-                getColorMap().add(newMapping);
-            }
-            if (!palette.contains(newColor)) {
-                addToPalette(newColor);
-            }
-            getNeonmarkerPanel().refreshDisplay();
+        if (tag == null || tag.isBlank()) {
+            LOGGER.debug("addColorMapping rejected: tag null or blank (color={})", color);
+            return false;
+        }
+        if (!isValidTag(tag)) {
+            LOGGER.debug("addColorMapping rejected: unknown tag \"{}\" (color={})", tag, color);
+            return false;
+        }
+        Color newColor = new Color(color);
+        ColorMapping newMapping = new ColorMapping(tag, newColor);
+        if (colormap.contains(newMapping)) {
             return true;
         }
-        LOGGER.debug("Either the tag: \"{}\" or the color: \"{}\" was invalid.", tag, color);
-        return false;
+        colormap.add(newMapping);
+        if (!palette.contains(newColor)) {
+            addToPalette(newColor);
+        }
+        getNeonmarkerPanel().refreshDisplay();
+        return true;
     }
 
     public static void addToPalette(Color addColor) {
         palette.add(addColor);
     }
 
-    private static boolean isValidColor(int colorValue) {
-        return INT_RANGE.contains(colorValue);
-    }
-
     private static boolean isValidTag(String tag) {
+        if (TAG_PATTERN.matcher(tag).matches()) {
+            return true;
+        }
         try {
             return getExtension(ExtensionPassiveScan2.class).getAutoTaggingTags().contains(tag)
-                    || getHistoryExtension()
+                    || getExtension(ExtensionHistory.class)
                             .getModel()
                             .getDb()
                             .getTableTag()
@@ -231,10 +235,6 @@ public class ExtensionNeonmarker extends ExtensionAdaptor {
             LOGGER.debug("Couldn't get tags from DB.");
             return false;
         }
-    }
-
-    private List<ColorMapping> getColorMap() {
-        return colormap;
     }
 
     private class MarkItemColorHighlighter extends AbstractHighlighter {
@@ -278,9 +278,8 @@ public class ExtensionNeonmarker extends ExtensionAdaptor {
         }
     }
 
-    static class ColorMapping implements Serializable {
+    static class ColorMapping {
 
-        private static final long serialVersionUID = -1054428983726909074L;
         private String tag;
         private Color color;
 
