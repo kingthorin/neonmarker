@@ -70,21 +70,25 @@ class NeonmarkerPanel extends AbstractPanel {
 
     private static final Logger LOGGER = LogManager.getLogger(NeonmarkerPanel.class);
 
-    private static final String UP_ARROW = "\u2191";
-    private static final String DOWN_ARROW = "\u2193";
-    private static final String MULTIPLICATION_X = "\u2715";
-
     private Model historyTableModel;
-    private List<ExtensionNeonmarker.ColorMapping> colormap;
+    private NeonmarkerColorService colorService;
     private Container colorSelectionPanel;
     private ZapToggleButton enableButton;
     private ExtensionHistory extHist;
 
-    NeonmarkerPanel(Model model, List<ExtensionNeonmarker.ColorMapping> colormap) {
+    NeonmarkerPanel(Model model, NeonmarkerColorService colorService) {
         historyTableModel = model;
-        this.colormap = colormap;
+        this.colorService = colorService;
         extHist = ExtensionNeonmarker.getExtension(ExtensionHistory.class);
         initializePanel();
+    }
+
+    @Override
+    public void updateUI() {
+        super.updateUI();
+        if (colorService != null && colorSelectionPanel != null) {
+            refreshDisplay();
+        }
     }
 
     private void initializePanel() {
@@ -112,11 +116,7 @@ class NeonmarkerPanel extends AbstractPanel {
                 DisplayUtils.getScaledIcon(
                         NeonmarkerPanel.class.getResource("/resource/icon/16/103.png")));
         addButton.setToolTipText(Constant.messages.getString("neonmarker.panel.button.add"));
-        addButton.addActionListener(
-                actionEvent -> {
-                    colormap.add(new ExtensionNeonmarker.ColorMapping());
-                    refreshDisplay();
-                });
+        addButton.addActionListener(actionEvent -> colorService.addEmptyRule());
         toolbar.add(addButton);
         toolbar.add(new JSeparator(SwingConstants.VERTICAL));
 
@@ -161,12 +161,12 @@ class NeonmarkerPanel extends AbstractPanel {
         colorSelectionPanel.setLayout(new GridBagLayout());
         add(new JScrollPane(colorSelectionPanel), BorderLayout.CENTER);
         clearColorSelectionPanel();
+        // Extension field still null here, so service onChange cannot refresh yet.
+        refreshDisplay();
     }
 
     private void clearColorSelectionPanel() {
-        colormap.clear();
-        colormap.add(new ExtensionNeonmarker.ColorMapping());
-        refreshDisplay();
+        colorService.clearRules();
     }
 
     protected void refreshDisplay() {
@@ -175,7 +175,7 @@ class NeonmarkerPanel extends AbstractPanel {
         c.anchor = GridBagConstraints.LINE_START;
         c.fill = GridBagConstraints.VERTICAL;
         c.gridy = 0;
-        for (ExtensionNeonmarker.ColorMapping rule : colormap) {
+        for (ColorMapping rule : colorService.getColorRules()) {
             c.gridx = 0;
             colorSelectionPanel.add(getColorComboBox(rule), c);
             c.gridx++;
@@ -201,17 +201,19 @@ class NeonmarkerPanel extends AbstractPanel {
     }
 
     private Component getMoveButton(int ruleNumber, boolean up) {
-        JButton move = new JButton(up ? UP_ARROW : DOWN_ARROW);
-        if ((up && ruleNumber == 0) || (!up && ruleNumber == colormap.size() - 1)) {
+        JButton move =
+                new JButton(
+                        Constant.messages.getString(
+                                up
+                                        ? "neonmarker.panel.mapping.move.up.label"
+                                        : "neonmarker.panel.mapping.move.down.label"));
+        if ((up && ruleNumber == 0)
+                || (!up && ruleNumber == colorService.getColorRules().size() - 1)) {
             move.setEnabled(false);
         }
         move.setActionCommand(up ? "up" : "down");
         move.setToolTipText(Constant.messages.getString("neonmarker.panel.mapping.move"));
-        move.addActionListener(
-                e -> {
-                    Collections.swap(colormap, ruleNumber, up ? ruleNumber - 1 : ruleNumber + 1);
-                    refreshDisplay();
-                });
+        move.addActionListener(e -> colorService.swapRules(ruleNumber, up));
         return move;
     }
 
@@ -222,7 +224,7 @@ class NeonmarkerPanel extends AbstractPanel {
                                 top
                                         ? "neonmarker.panel.mapping.move.top.label"
                                         : "neonmarker.panel.mapping.move.bottom.label"));
-        int lastIndex = colormap.size() - 1;
+        int lastIndex = colorService.getColorRules().size() - 1;
         if ((top && ruleNumber == 0) || (!top && ruleNumber == lastIndex)) {
             move.setEnabled(false);
         }
@@ -233,36 +235,47 @@ class NeonmarkerPanel extends AbstractPanel {
                                 : "neonmarker.panel.mapping.move.bottom"));
         move.addActionListener(
                 e -> {
-                    ExtensionNeonmarker.ColorMapping rule = colormap.remove(ruleNumber);
                     if (top) {
-                        colormap.add(0, rule);
+                        colorService.moveRuleToTop(ruleNumber);
                     } else {
-                        colormap.add(rule);
+                        colorService.moveRuleToBottom(ruleNumber);
                     }
-                    refreshDisplay();
                 });
         return move;
     }
 
-    private Component getColorComboBox(ExtensionNeonmarker.ColorMapping rule) {
+    private Component getColorComboBox(ColorMapping rule) {
         JComboBox<Color> colorSelect = new JComboBox<>();
-        ExtensionNeonmarker.getPalette().forEach(colorSelect::addItem);
+        NeonmarkerColorService.getPalette().forEach(colorSelect::addItem);
         colorSelect.setRenderer(new ColorListRenderer());
         colorSelect.setSelectedItem(
-                isOnPalette(rule.getColor()) ? rule.getColor() : ExtensionNeonmarker.PLACEHOLDER);
+                isOnPalette(rule.getColor())
+                        ? rule.getColor()
+                        : NeonmarkerColorService.PLACEHOLDER);
         colorSelect.addActionListener(
                 actionEvent -> {
                     if (((Color) colorSelect.getSelectedItem())
-                            .equals(ExtensionNeonmarker.PLACEHOLDER)) {
-                        rule.setColor(
+                            .equals(NeonmarkerColorService.PLACEHOLDER)) {
+                        Color previous = rule.getColor();
+                        Color chosen =
                                 JColorChooser.showDialog(
                                         this,
                                         Constant.messages.getString(
                                                 "neonmarker.panel.color.chooser.title"),
-                                        Color.WHITE));
-                        if (rule.getColor() != null && !isOnPalette(rule.getColor())) {
-                            ExtensionNeonmarker.addToPalette(rule.getColor());
+                                        Color.WHITE);
+                        if (chosen == null) {
+                            colorSelect.setSelectedItem(
+                                    isOnPalette(previous)
+                                            ? previous
+                                            : NeonmarkerColorService.PLACEHOLDER);
+                            return;
+                        }
+                        rule.setColor(chosen);
+                        if (!isOnPalette(chosen)) {
+                            NeonmarkerColorService.addToPalette(chosen);
                             refreshDisplay();
+                        } else {
+                            repaintHistoryTable();
                         }
                     } else {
                         rule.setColor((Color) colorSelect.getSelectedItem());
@@ -276,13 +289,13 @@ class NeonmarkerPanel extends AbstractPanel {
         if (color == null) {
             return false;
         }
-        return ExtensionNeonmarker.getPalette().contains(color);
+        return NeonmarkerColorService.getPalette().contains(color);
     }
 
-    private Component getTagComboBox(ExtensionNeonmarker.ColorMapping rule) {
+    private Component getTagComboBox(ColorMapping rule) {
         JComboBox<String> tagSelect = new JComboBox<>();
         populateTagComboBox(tagSelect);
-        tagSelect.setSelectedItem(rule.getTag());
+        selectTag(tagSelect, rule.getTag());
         final AtomicBoolean refreshingTags = new AtomicBoolean(false);
         tagSelect.addPopupMenuListener(
                 new PopupMenuListener() {
@@ -290,16 +303,9 @@ class NeonmarkerPanel extends AbstractPanel {
                     public void popupMenuWillBecomeVisible(PopupMenuEvent popupMenuEvent) {
                         refreshingTags.set(true);
                         try {
-                            String selected = (String) tagSelect.getSelectedItem();
                             tagSelect.removeAllItems();
-                            List<String> tags = populateTagComboBox(tagSelect);
-                            String tagToRestore = selected != null ? selected : rule.getTag();
-                            if (tagToRestore != null && !tags.contains(tagToRestore)) {
-                                tagSelect.insertItemAt(tagToRestore, 0);
-                            }
-                            if (tagToRestore != null) {
-                                tagSelect.setSelectedItem(tagToRestore);
-                            }
+                            populateTagComboBox(tagSelect);
+                            selectTag(tagSelect, rule.getTag());
                         } finally {
                             refreshingTags.set(false);
                         }
@@ -322,12 +328,25 @@ class NeonmarkerPanel extends AbstractPanel {
         return tagSelect;
     }
 
-    private List<String> populateTagComboBox(JComboBox<String> tagSelect) {
-        List<String> tags = loadTags();
-        for (String tag : tags) {
+    private static void selectTag(JComboBox<String> tagSelect, String tag) {
+        if (tag == null) {
+            tagSelect.setSelectedIndex(-1);
+            return;
+        }
+        for (int i = 0; i < tagSelect.getItemCount(); i++) {
+            if (tag.equals(tagSelect.getItemAt(i))) {
+                tagSelect.setSelectedIndex(i);
+                return;
+            }
+        }
+        tagSelect.insertItemAt(tag, 0);
+        tagSelect.setSelectedIndex(0);
+    }
+
+    private void populateTagComboBox(JComboBox<String> tagSelect) {
+        for (String tag : loadTags()) {
             tagSelect.addItem(tag);
         }
-        return tags;
     }
 
     private List<String> loadTags() {
@@ -353,43 +372,36 @@ class NeonmarkerPanel extends AbstractPanel {
     }
 
     private Component getRemoveButton(int ruleNumber) {
-        JButton remove = new JButton(MULTIPLICATION_X);
+        JButton remove =
+                new JButton(Constant.messages.getString("neonmarker.panel.mapping.remove.label"));
         remove.setToolTipText(Constant.messages.getString("neonmarker.panel.mapping.remove"));
         remove.setActionCommand("remove");
         remove.addActionListener(
                 e -> {
-                    if (colormap.isEmpty()) {
+                    if (colorService.getColorRules().isEmpty()) {
                         return;
                     }
-                    String tag = colormap.get(ruleNumber).getTag();
+                    String tag = colorService.getColorRules().get(ruleNumber).getTag();
                     if (tag != null && ExtensionNeonmarker.TAG_PATTERN.matcher(tag).matches()) {
                         switch (getRemovalChoice()) {
                             case JOptionPane.CANCEL_OPTION:
                             case JOptionPane.CLOSED_OPTION:
                                 return;
                             case JOptionPane.NO_OPTION:
-                                removeMapping(ruleNumber);
+                                colorService.removeRule(ruleNumber);
                                 break;
                             case JOptionPane.YES_OPTION:
                                 removeTagFromHistoryTable(tag);
-                                removeMapping(ruleNumber);
+                                colorService.removeRule(ruleNumber);
                                 break;
                             default:
                                 return;
                         }
                     } else {
-                        removeMapping(ruleNumber);
+                        colorService.removeRule(ruleNumber);
                     }
-                    refreshDisplay();
                 });
         return remove;
-    }
-
-    private void removeMapping(int ruleNumber) {
-        colormap.remove(ruleNumber);
-        if (colormap.isEmpty()) {
-            colormap.add(new ExtensionNeonmarker.ColorMapping());
-        }
     }
 
     private static int getRemovalChoice() {
@@ -454,7 +466,7 @@ class NeonmarkerPanel extends AbstractPanel {
         @Override
         public Component getListCellRendererComponent(
                 JList<?> jList, Object entry, int i, boolean b, boolean b1) {
-            if (((Color) entry).equals(ExtensionNeonmarker.PLACEHOLDER)) {
+            if (((Color) entry).equals(NeonmarkerColorService.PLACEHOLDER)) {
                 setIcon(null);
                 setText(Constant.messages.getString("neonmarker.panel.color.menu.custom.label"));
             } else {

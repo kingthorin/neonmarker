@@ -21,10 +21,9 @@ package org.zaproxy.zap.extension.neonmarker;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.EventQueue;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Objects;
+import java.util.Set;
 import java.util.regex.Pattern;
 import javax.swing.ImageIcon;
 import org.apache.logging.log4j.LogManager;
@@ -37,20 +36,25 @@ import org.parosproxy.paros.db.DatabaseException;
 import org.parosproxy.paros.extension.Extension;
 import org.parosproxy.paros.extension.ExtensionAdaptor;
 import org.parosproxy.paros.extension.ExtensionHook;
+import org.parosproxy.paros.extension.OptionsChangedListener;
 import org.parosproxy.paros.extension.history.ExtensionHistory;
 import org.parosproxy.paros.model.HistoryReference;
+import org.parosproxy.paros.model.HistoryReferenceEventPublisher;
+import org.parosproxy.paros.model.OptionsParam;
 import org.zaproxy.addon.pscan.ExtensionPassiveScan2;
+import org.zaproxy.zap.ZAP;
+import org.zaproxy.zap.eventBus.Event;
+import org.zaproxy.zap.eventBus.EventConsumer;
 import org.zaproxy.zap.extension.help.ExtensionHelp;
 import org.zaproxy.zap.utils.DisplayUtils;
 import org.zaproxy.zap.view.table.HistoryReferencesTableModel;
 
-public class ExtensionNeonmarker extends ExtensionAdaptor {
+public class ExtensionNeonmarker extends ExtensionAdaptor implements EventConsumer {
     private static final Logger LOGGER = LogManager.getLogger(ExtensionNeonmarker.class);
     private static final List<Class<? extends Extension>> EXTENSION_DEPENDENCIES =
             List.of(ExtensionPassiveScan2.class, ExtensionHistory.class);
 
     public static final String NAME = "ExtensionNeonmarker";
-    public static final Color PLACEHOLDER = new Color(0, 0, 0, 0);
     public static final String RESOURCE = "/org/zaproxy/zap/extension/neonmarker/resources";
 
     public static final String TAG_PREFIX = "neon_";
@@ -59,22 +63,30 @@ public class ExtensionNeonmarker extends ExtensionAdaptor {
                     ExtensionNeonmarker.TAG_PREFIX
                             + "[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[0-9a-f]{4}-[0-9a-f]{12}");
 
-    private static List<Color> palette;
     private static ImageIcon icon;
-
-    private ArrayList<ColorMapping> colormap;
+    private NeonmarkerColorService colorService;
     private NeonmarkerPanel neonmarkerPanel;
     private MarkItemColorHighlighter highlighter;
+    private boolean highlighterEnabled;
     private PopupMenuHistoryNeonmarker menuHistoryColor;
 
     public ExtensionNeonmarker() {
         super(NAME);
-        getPalette();
     }
 
     @Override
     public void hook(ExtensionHook extensionHook) {
-        colormap = new ArrayList<>();
+        colorService =
+                new NeonmarkerColorService(
+                        ExtensionNeonmarker::isValidTag, this::refreshColouringView);
+
+        ZAP.getEventBus()
+                .registerConsumer(
+                        this,
+                        HistoryReferenceEventPublisher.getPublisher().getPublisherName(),
+                        HistoryReferenceEventPublisher.EVENT_REMOVED,
+                        HistoryReferenceEventPublisher.EVENT_TAG_REMOVED,
+                        HistoryReferenceEventPublisher.EVENT_TAGS_SET);
 
         if (hasView()) {
             toggleHighlighter(true);
@@ -82,7 +94,44 @@ public class ExtensionNeonmarker extends ExtensionAdaptor {
             ExtensionHelp.enableHelpKey(getNeonmarkerPanel(), "neonmarker");
 
             extensionHook.getHookMenu().addPopupMenuItem(getMenuHistoryColor());
+            extensionHook.addOptionsChangedListener(new OptionsChangedListenerImpl());
         }
+    }
+
+    @Override
+    public void eventReceived(Event event) {
+        if (EventQueue.isDispatchThread()) {
+            pruneOrphanNeonRules();
+        } else {
+            EventQueue.invokeLater(this::pruneOrphanNeonRules);
+        }
+    }
+
+    private void pruneOrphanNeonRules() {
+        if (colorService == null) {
+            return;
+        }
+        Set<String> existingTags;
+        try {
+            existingTags =
+                    new HashSet<>(
+                            getExtension(ExtensionHistory.class)
+                                    .getModel()
+                                    .getDb()
+                                    .getTableTag()
+                                    .getAllTags());
+        } catch (DatabaseException e) {
+            LOGGER.debug("Couldn't get tags from DB while pruning neon rules.", e);
+            return;
+        }
+        colorService.removeOrphanNeonRules(tag -> TAG_PATTERN.matcher(tag).matches(), existingTags);
+    }
+
+    private void refreshColouringView() {
+        if (!hasView() || colorService == null || neonmarkerPanel == null) {
+            return;
+        }
+        neonmarkerPanel.refreshDisplay();
     }
 
     @Override
@@ -97,8 +146,10 @@ public class ExtensionNeonmarker extends ExtensionAdaptor {
 
     @Override
     public void unload() {
-        neonmarkerPanel = null;
+        ZAP.getEventBus().unregisterConsumer(this);
         toggleHighlighter(false);
+        neonmarkerPanel = null;
+        colorService = null;
         super.unload();
     }
 
@@ -112,39 +163,11 @@ public class ExtensionNeonmarker extends ExtensionAdaptor {
         return "Juha Kivekäs, Kingthorin";
     }
 
-    static List<Color> getPalette() {
-        if (palette == null) {
-            palette = new ArrayList<>(17);
-            palette.addAll(
-                    Arrays.asList(
-                            // RAINBOW HACKER THEME
-                            new Color(0xff8080),
-                            new Color(0xffc080),
-                            new Color(0xffff80),
-                            new Color(0xc0ff80),
-                            new Color(0x80ff80),
-                            new Color(0x80ffc0),
-                            new Color(0x80ffff),
-                            new Color(0x80c0ff),
-                            new Color(0x8080ff),
-                            new Color(0xc080ff),
-                            new Color(0xff80ff),
-                            new Color(0xff80c0),
-                            // CORPORATE EDITION
-                            new Color(0xe0ffff),
-                            new Color(0xa8c0c0),
-                            new Color(0x708080),
-                            new Color(0x384040),
-                            // Placeholder
-                            PLACEHOLDER));
-        }
-        return palette;
-    }
-
     NeonmarkerPanel getNeonmarkerPanel() {
         if (neonmarkerPanel == null) {
             neonmarkerPanel =
-                    new NeonmarkerPanel(getExtension(ExtensionHistory.class).getModel(), colormap);
+                    new NeonmarkerPanel(
+                            getExtension(ExtensionHistory.class).getModel(), colorService);
         }
         return neonmarkerPanel;
     }
@@ -176,12 +199,16 @@ public class ExtensionNeonmarker extends ExtensionAdaptor {
     }
 
     protected void toggleHighlighter(boolean on) {
+        if (on == highlighterEnabled) {
+            return;
+        }
         ExtensionHistory extHistory = getExtension(ExtensionHistory.class);
         if (on) {
-            extHistory.getHistoryReferencesTable().setHighlighters(getHighlighter());
+            extHistory.getHistoryReferencesTable().addHighlighter(getHighlighter());
         } else {
             extHistory.getHistoryReferencesTable().removeHighlighter(getHighlighter());
         }
+        highlighterEnabled = on;
     }
 
     /**
@@ -194,29 +221,7 @@ public class ExtensionNeonmarker extends ExtensionAdaptor {
      *     was, {@code false} otherwise).
      */
     public boolean addColorMapping(String tag, int color) {
-        if (tag == null || tag.isBlank()) {
-            LOGGER.debug("addColorMapping rejected: tag null or blank (color={})", color);
-            return false;
-        }
-        if (!isValidTag(tag)) {
-            LOGGER.debug("addColorMapping rejected: unknown tag \"{}\" (color={})", tag, color);
-            return false;
-        }
-        Color newColor = new Color(color);
-        ColorMapping newMapping = new ColorMapping(tag, newColor);
-        if (colormap.contains(newMapping)) {
-            return true;
-        }
-        colormap.add(newMapping);
-        if (!palette.contains(newColor)) {
-            addToPalette(newColor);
-        }
-        getNeonmarkerPanel().refreshDisplay();
-        return true;
-    }
-
-    public static void addToPalette(Color addColor) {
-        palette.add(addColor);
+        return colorService != null && colorService.addColorMapping(tag, color);
     }
 
     private static boolean isValidTag(String tag) {
@@ -237,6 +242,13 @@ public class ExtensionNeonmarker extends ExtensionAdaptor {
         }
     }
 
+    private class OptionsChangedListenerImpl implements OptionsChangedListener {
+        @Override
+        public void optionsChanged(OptionsParam optionsParam) {
+            refreshColouringView();
+        }
+    }
+
     private class MarkItemColorHighlighter extends AbstractHighlighter {
         private int idColumnIndex;
         private ExtensionHistory extHistory;
@@ -250,80 +262,22 @@ public class ExtensionNeonmarker extends ExtensionAdaptor {
 
         @Override
         protected Component doHighlight(Component component, ComponentAdapter adapter) {
-            HistoryReference ref =
-                    extHistory.getHistoryReference((int) adapter.getValue(idColumnIndex));
+            int historyId = (int) adapter.getValue(idColumnIndex);
+            HistoryReference ref = extHistory.getHistoryReference(historyId);
             List<String> tags;
             try {
                 tags = ref.getTags();
             } catch (Exception e) {
-                LOGGER.error("Failed to fetch tags for history reference");
+                LOGGER.error("Failed to fetch tags for history reference {}", historyId, e);
                 return component;
             }
 
-            Color mark = mapTagsToColor(tags);
+            Color mark = colorService.resolveColor(tags);
             if (mark != null) {
                 component.setBackground(mark);
                 component.setForeground(NeonmarkerColorUtils.contrastingForeground(mark));
             }
             return component;
-        }
-
-        private Color mapTagsToColor(List<String> tags) {
-            for (ColorMapping colorMapping : colormap) {
-                if (tags.contains(colorMapping.tag)) {
-                    return colorMapping.color;
-                }
-            }
-            return null;
-        }
-    }
-
-    static class ColorMapping {
-
-        private String tag;
-        private Color color;
-
-        ColorMapping() {
-            this.tag = null;
-            this.color = palette.get(0);
-        }
-
-        ColorMapping(String tag, Color color) {
-            this.tag = tag;
-            this.color = color;
-        }
-
-        public String getTag() {
-            return tag;
-        }
-
-        public void setTag(String tag) {
-            this.tag = tag;
-        }
-
-        public Color getColor() {
-            return color;
-        }
-
-        public void setColor(Color color) {
-            this.color = color;
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(color, tag);
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            if (this == obj) {
-                return true;
-            }
-            if (!(obj instanceof ColorMapping)) {
-                return false;
-            }
-            ColorMapping other = (ColorMapping) obj;
-            return Objects.equals(color, other.color) && Objects.equals(tag, other.tag);
         }
     }
 
