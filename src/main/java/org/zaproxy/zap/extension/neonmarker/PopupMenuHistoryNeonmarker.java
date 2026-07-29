@@ -33,10 +33,14 @@ public class PopupMenuHistoryNeonmarker extends PopupMenuHistoryReferenceContain
         PopupMenuItemHistoryColor setColor =
                 new PopupMenuItemHistoryColor(
                         Constant.messages.getString("neonmarker.popup.item.color.label"));
+        PopupMenuItemHistoryColor clearColor =
+                new PopupMenuItemHistoryColor(
+                        Constant.messages.getString("neonmarker.popup.item.clear.label"), true);
         PopupMenuItemHistoryUntag unTag =
                 new PopupMenuItemHistoryUntag(
                         Constant.messages.getString("neonmarker.popup.item.untag.label"));
         add(setColor);
+        add(clearColor);
         add(unTag);
     }
 

@@ -22,7 +22,9 @@ import java.awt.Color;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Predicate;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -36,8 +38,12 @@ class NeonmarkerColorService {
     private static List<Color> palette;
 
     private final ArrayList<ColorMapping> colorRules = new ArrayList<>();
+    private final Map<Integer, Color> historyColors = new HashMap<>();
     private final Predicate<String> tagValidator;
     private final Runnable onChange;
+
+    private boolean arbitraryLayerEnabled = true;
+    private boolean tagLayerEnabled = true;
 
     NeonmarkerColorService(Predicate<String> tagValidator, Runnable onChange) {
         this.tagValidator = tagValidator;
@@ -79,6 +85,60 @@ class NeonmarkerColorService {
 
     List<ColorMapping> getColorRules() {
         return Collections.unmodifiableList(colorRules);
+    }
+
+    boolean isArbitraryLayerEnabled() {
+        return arbitraryLayerEnabled;
+    }
+
+    void setArbitraryLayerEnabled(boolean enabled) {
+        if (arbitraryLayerEnabled == enabled) {
+            return;
+        }
+        arbitraryLayerEnabled = enabled;
+        onChange.run();
+    }
+
+    boolean isTagLayerEnabled() {
+        return tagLayerEnabled;
+    }
+
+    void setTagLayerEnabled(boolean enabled) {
+        if (tagLayerEnabled == enabled) {
+            return;
+        }
+        tagLayerEnabled = enabled;
+        onChange.run();
+    }
+
+    void setHistoryColors(Collection<Integer> historyIds, Color color) {
+        if (color == null || historyIds == null || historyIds.isEmpty()) {
+            return;
+        }
+        for (Integer historyId : historyIds) {
+            historyColors.put(historyId, color);
+        }
+        onChange.run();
+    }
+
+    void clearHistoryColors(Collection<Integer> historyIds) {
+        if (historyIds == null || historyIds.isEmpty()) {
+            return;
+        }
+        boolean removed = false;
+        for (Integer historyId : historyIds) {
+            if (historyColors.remove(historyId) != null) {
+                removed = true;
+            }
+        }
+        if (removed) {
+            onChange.run();
+        }
+    }
+
+    /** Drops a history colour without notifying listeners (e.g. history row already gone). */
+    void dropHistoryColor(int historyId) {
+        historyColors.remove(historyId);
     }
 
     void addEmptyRule() {
@@ -193,8 +253,21 @@ class NeonmarkerColorService {
         return true;
     }
 
-    Color resolveColor(List<String> tags) {
+    // Arbitrary colour (if layer on), else first enabled matching tag rule (if layer on).
+    Color resolveColor(int historyId, List<String> tags) {
+        if (arbitraryLayerEnabled) {
+            Color historyColor = historyColors.get(historyId);
+            if (historyColor != null) {
+                return historyColor;
+            }
+        }
+        if (!tagLayerEnabled || tags == null) {
+            return null;
+        }
         for (ColorMapping colorMapping : colorRules) {
+            if (!colorMapping.isEnabled()) {
+                continue;
+            }
             String tag = colorMapping.getTag();
             if (tag != null && tags.contains(tag)) {
                 return colorMapping.getColor();

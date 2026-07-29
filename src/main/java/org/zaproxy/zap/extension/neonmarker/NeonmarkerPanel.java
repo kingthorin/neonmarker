@@ -35,6 +35,7 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JColorChooser;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
@@ -154,6 +155,32 @@ class NeonmarkerPanel extends AbstractPanel {
                             .toggleHighlighter(enableButton.isSelected());
                 });
         toolbar.add(enableButton);
+        toolbar.add(new JSeparator(SwingConstants.VERTICAL));
+
+        ZapToggleButton arbitraryLayerButton =
+                new ZapToggleButton(
+                        Constant.messages.getString(
+                                "neonmarker.panel.toolbar.layer.arbitrary.label"),
+                        colorService.isArbitraryLayerEnabled());
+        arbitraryLayerButton.setToolTipText(
+                Constant.messages.getString("neonmarker.panel.toolbar.layer.arbitrary.tooltip"));
+        arbitraryLayerButton.addItemListener(
+                event ->
+                        colorService.setArbitraryLayerEnabled(
+                                event.getStateChange() == ItemEvent.SELECTED));
+        toolbar.add(arbitraryLayerButton);
+
+        ZapToggleButton tagLayerButton =
+                new ZapToggleButton(
+                        Constant.messages.getString("neonmarker.panel.toolbar.layer.tags.label"),
+                        colorService.isTagLayerEnabled());
+        tagLayerButton.setToolTipText(
+                Constant.messages.getString("neonmarker.panel.toolbar.layer.tags.tooltip"));
+        tagLayerButton.addItemListener(
+                event ->
+                        colorService.setTagLayerEnabled(
+                                event.getStateChange() == ItemEvent.SELECTED));
+        toolbar.add(tagLayerButton);
 
         add(toolbar, BorderLayout.PAGE_START);
 
@@ -177,6 +204,8 @@ class NeonmarkerPanel extends AbstractPanel {
         c.gridy = 0;
         for (ColorMapping rule : colorService.getColorRules()) {
             c.gridx = 0;
+            colorSelectionPanel.add(getEnabledCheckBox(rule), c);
+            c.gridx++;
             colorSelectionPanel.add(getColorComboBox(rule), c);
             c.gridx++;
             colorSelectionPanel.add(getTagComboBox(rule), c);
@@ -198,6 +227,18 @@ class NeonmarkerPanel extends AbstractPanel {
         colorSelectionPanel.validate();
         colorSelectionPanel.repaint();
         repaintHistoryTable();
+    }
+
+    private static Component getEnabledCheckBox(ColorMapping rule) {
+        JCheckBox enabled = new JCheckBox();
+        enabled.setSelected(rule.isEnabled());
+        enabled.setToolTipText(Constant.messages.getString("neonmarker.panel.mapping.enabled"));
+        enabled.addItemListener(
+                event -> {
+                    rule.setEnabled(event.getStateChange() == ItemEvent.SELECTED);
+                    repaintHistoryTable();
+                });
+        return enabled;
     }
 
     private Component getMoveButton(int ruleNumber, boolean up) {

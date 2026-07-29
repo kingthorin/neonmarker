@@ -4,6 +4,11 @@ All notable changes to this add-on will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
+### Added
+- Per-row arbitrary History colours (Set/Clear Color) without creating neon_* tags.
+- Layer toggles for arbitrary colours and tag rules; per-rule enable checkbox.
+- "To Top" and "To Bottom" buttons for rule precedence.
+
 ### Fixed
 - Tag combobox selection is retained when adding or reordering rules.
 
@@ -11,9 +16,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - History row selection is shown over highlight colours.
 - Highlighted rows use contrasting text for readability.
 - Maintenance changes.
-
-### Added
-- "To Top" and "To Bottom" buttons for rule precedence.
+- "Un-Tag/Remove Color" renamed to "Remove Neon Tags".
 
 ## [1.8.0] - 2025-02-14
 ### Changed
