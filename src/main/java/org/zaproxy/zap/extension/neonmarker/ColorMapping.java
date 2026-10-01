@@ -24,6 +24,7 @@ import java.util.Objects;
 class ColorMapping {
     private String tag;
     private Color color;
+    private boolean enabled = true;
 
     ColorMapping() {
         this.color = NeonmarkerColorService.getPalette().get(0);
@@ -48,6 +49,14 @@ class ColorMapping {
 
     void setColor(Color color) {
         this.color = color;
+    }
+
+    boolean isEnabled() {
+        return enabled;
+    }
+
+    void setEnabled(boolean enabled) {
+        this.enabled = enabled;
     }
 
     @Override

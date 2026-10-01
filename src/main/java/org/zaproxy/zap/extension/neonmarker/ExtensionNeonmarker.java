@@ -100,6 +100,18 @@ public class ExtensionNeonmarker extends ExtensionAdaptor implements EventConsum
 
     @Override
     public void eventReceived(Event event) {
+        if (HistoryReferenceEventPublisher.EVENT_REMOVED.equals(event.getEventType())) {
+            if (colorService == null) {
+                return;
+            }
+            String id =
+                    event.getParameters()
+                            .get(HistoryReferenceEventPublisher.FIELD_HISTORY_REFERENCE_ID);
+            if (id != null) {
+                colorService.dropHistoryColor(Integer.parseInt(id));
+            }
+            return;
+        }
         if (EventQueue.isDispatchThread()) {
             pruneOrphanNeonRules();
         } else {
@@ -161,6 +173,10 @@ public class ExtensionNeonmarker extends ExtensionAdaptor implements EventConsum
     @Override
     public String getAuthor() {
         return "Juha Kivekäs, Kingthorin";
+    }
+
+    NeonmarkerColorService getColorService() {
+        return colorService;
     }
 
     NeonmarkerPanel getNeonmarkerPanel() {
@@ -272,7 +288,7 @@ public class ExtensionNeonmarker extends ExtensionAdaptor implements EventConsum
                 return component;
             }
 
-            Color mark = colorService.resolveColor(tags);
+            Color mark = colorService.resolveColor(historyId, tags);
             if (mark != null) {
                 component.setBackground(mark);
                 component.setForeground(NeonmarkerColorUtils.contrastingForeground(mark));

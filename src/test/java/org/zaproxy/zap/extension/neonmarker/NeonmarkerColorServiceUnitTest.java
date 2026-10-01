@@ -41,7 +41,7 @@ class NeonmarkerColorServiceUnitTest {
     @Test
     void shouldReturnNullWhenNoRulesMatch() {
         // Given / When
-        Color colour = service.resolveColor(List.of("unknown"));
+        Color colour = service.resolveColor(1, List.of("unknown"));
         // Then
         assertNull(colour);
     }
@@ -51,7 +51,7 @@ class NeonmarkerColorServiceUnitTest {
         // Given
         service.addColorMapping("Comment", 0xff0000);
         // When
-        Color colour = service.resolveColor(List.of("Comment"));
+        Color colour = service.resolveColor(1, List.of("Comment"));
         // Then
         assertEquals(new Color(0xff0000), colour);
     }
@@ -62,7 +62,7 @@ class NeonmarkerColorServiceUnitTest {
         service.addColorMapping("B", Color.BLUE.getRGB());
         service.addColorMapping("A", Color.RED.getRGB());
         // When
-        Color colour = service.resolveColor(List.of("A", "B"));
+        Color colour = service.resolveColor(1, List.of("A", "B"));
         // Then
         assertEquals(Color.BLUE, colour);
     }
@@ -95,7 +95,7 @@ class NeonmarkerColorServiceUnitTest {
         service.addColorMapping("B", Color.BLUE.getRGB());
         // When
         service.swapRules(1, true);
-        Color colour = service.resolveColor(List.of("A", "B"));
+        Color colour = service.resolveColor(1, List.of("A", "B"));
         // Then
         assertEquals(Color.BLUE, colour);
     }
@@ -111,7 +111,7 @@ class NeonmarkerColorServiceUnitTest {
         service.swapRules(-1, false);
         service.swapRules(2, true);
         // Then
-        assertEquals(Color.RED, service.resolveColor(List.of("A", "B")));
+        assertEquals(Color.RED, service.resolveColor(1, List.of("A", "B")));
     }
 
     @Test
@@ -122,7 +122,7 @@ class NeonmarkerColorServiceUnitTest {
         service.addColorMapping("C", Color.GREEN.getRGB());
         // When
         service.moveRuleToTop(2);
-        Color colour = service.resolveColor(List.of("A", "B", "C"));
+        Color colour = service.resolveColor(1, List.of("A", "B", "C"));
         // Then
         assertEquals(Color.GREEN, colour);
     }
@@ -134,7 +134,7 @@ class NeonmarkerColorServiceUnitTest {
         service.addColorMapping("B", Color.BLUE.getRGB());
         // When
         service.moveRuleToBottom(0);
-        Color colour = service.resolveColor(List.of("A", "B"));
+        Color colour = service.resolveColor(1, List.of("A", "B"));
         // Then
         assertEquals(Color.BLUE, colour);
     }
@@ -180,7 +180,7 @@ class NeonmarkerColorServiceUnitTest {
         service.addEmptyRule();
         service.addColorMapping("Comment", 0xff0000);
         // When
-        Color colour = service.resolveColor(List.of("Comment"));
+        Color colour = service.resolveColor(1, List.of("Comment"));
         // Then
         assertEquals(new Color(0xff0000), colour);
     }
@@ -256,5 +256,152 @@ class NeonmarkerColorServiceUnitTest {
         // Then
         assertEquals(1, service.getColorRules().size());
         assertNull(service.getColorRules().get(0).getTag());
+    }
+
+    @Test
+    void shouldReplaceHistoryColorOnSameId() {
+        // Given
+        service.setHistoryColors(List.of(10), Color.RED);
+        // When
+        service.setHistoryColors(List.of(10), Color.BLUE);
+        // Then
+        assertEquals(Color.BLUE, service.resolveColor(10, List.of()));
+    }
+
+    @Test
+    void shouldSetHistoryColorsOnMultipleIds() {
+        // Given / When
+        service.setHistoryColors(List.of(1, 2, 3), Color.GREEN);
+        // Then
+        assertEquals(Color.GREEN, service.resolveColor(1, List.of()));
+        assertEquals(Color.GREEN, service.resolveColor(2, List.of()));
+        assertEquals(Color.GREEN, service.resolveColor(3, List.of()));
+    }
+
+    @Test
+    void shouldPreferArbitraryColorOverTagRule() {
+        // Given
+        service.addColorMapping("Comment", Color.RED.getRGB());
+        service.setHistoryColors(List.of(5), Color.BLUE);
+        // When
+        Color colour = service.resolveColor(5, List.of("Comment"));
+        // Then
+        assertEquals(Color.BLUE, colour);
+    }
+
+    @Test
+    void shouldSkipArbitraryLayerWhenDisabled() {
+        // Given
+        service.addColorMapping("Comment", Color.RED.getRGB());
+        service.setHistoryColors(List.of(5), Color.BLUE);
+        service.setArbitraryLayerEnabled(false);
+        // When
+        Color colour = service.resolveColor(5, List.of("Comment"));
+        // Then
+        assertEquals(Color.RED, colour);
+    }
+
+    @Test
+    void shouldSkipTagLayerWhenDisabled() {
+        // Given
+        service.addColorMapping("Comment", Color.RED.getRGB());
+        service.setTagLayerEnabled(false);
+        // When
+        Color colour = service.resolveColor(1, List.of("Comment"));
+        // Then
+        assertNull(colour);
+    }
+
+    @Test
+    void shouldSkipDisabledTagRule() {
+        // Given
+        service.addColorMapping("A", Color.RED.getRGB());
+        service.addColorMapping("B", Color.BLUE.getRGB());
+        service.getColorRules().get(0).setEnabled(false);
+        // When
+        Color colour = service.resolveColor(1, List.of("A", "B"));
+        // Then
+        assertEquals(Color.BLUE, colour);
+    }
+
+    @Test
+    void shouldFallBackToTagAfterClearingHistoryColor() {
+        // Given
+        service.addColorMapping("Comment", Color.RED.getRGB());
+        service.setHistoryColors(List.of(5), Color.BLUE);
+        // When
+        service.clearHistoryColors(List.of(5));
+        // Then
+        assertEquals(Color.RED, service.resolveColor(5, List.of("Comment")));
+    }
+
+    @Test
+    void shouldDropHistoryColorWithoutNotifying() {
+        // Given
+        AtomicInteger changes = new AtomicInteger();
+        NeonmarkerColorService notifying =
+                new NeonmarkerColorService(tag -> true, changes::incrementAndGet);
+        notifying.setHistoryColors(List.of(7), Color.RED);
+        changes.set(0);
+        // When
+        notifying.dropHistoryColor(7);
+        // Then
+        assertNull(notifying.resolveColor(7, List.of()));
+        assertEquals(0, changes.get());
+    }
+
+    @Test
+    void shouldNotNotifyWhenSettingHistoryColorsWithNullColor() {
+        // Given
+        AtomicInteger changes = new AtomicInteger();
+        NeonmarkerColorService notifying =
+                new NeonmarkerColorService(tag -> true, changes::incrementAndGet);
+        // When
+        notifying.setHistoryColors(List.of(1), null);
+        // Then
+        assertEquals(0, changes.get());
+        assertNull(notifying.resolveColor(1, List.of()));
+    }
+
+    @Test
+    void shouldNotNotifyWhenSettingHistoryColorsWithEmptyIds() {
+        // Given
+        AtomicInteger changes = new AtomicInteger();
+        NeonmarkerColorService notifying =
+                new NeonmarkerColorService(tag -> true, changes::incrementAndGet);
+        // When
+        notifying.setHistoryColors(List.of(), Color.RED);
+        // Then
+        assertEquals(0, changes.get());
+    }
+
+    @Test
+    void shouldNotNotifyWhenClearingHistoryColorsWithEmptyIds() {
+        // Given
+        AtomicInteger changes = new AtomicInteger();
+        NeonmarkerColorService notifying =
+                new NeonmarkerColorService(tag -> true, changes::incrementAndGet);
+        notifying.setHistoryColors(List.of(1), Color.RED);
+        changes.set(0);
+        // When
+        notifying.clearHistoryColors(List.of());
+        // Then
+        assertEquals(0, changes.get());
+        assertEquals(Color.RED, notifying.resolveColor(1, List.of()));
+    }
+
+    @Test
+    void shouldNotNotifyWhenClearingHistoryColorsWithNoMatch() {
+        // Given
+        AtomicInteger changes = new AtomicInteger();
+        NeonmarkerColorService notifying =
+                new NeonmarkerColorService(tag -> true, changes::incrementAndGet);
+        notifying.setHistoryColors(List.of(1), Color.RED);
+        changes.set(0);
+        // When
+        notifying.clearHistoryColors(List.of(99));
+        // Then
+        assertEquals(0, changes.get());
+        assertEquals(Color.RED, notifying.resolveColor(1, List.of()));
     }
 }
