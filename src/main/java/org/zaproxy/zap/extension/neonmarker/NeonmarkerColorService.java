@@ -35,12 +35,16 @@ class NeonmarkerColorService {
 
     static final Color PLACEHOLDER = new Color(0, 0, 0, 0);
 
+    static final String SETTING_ARBITRARY_LAYER = "layer.arbitrary";
+    static final String SETTING_TAG_LAYER = "layer.tags";
+
     private static List<Color> palette;
 
     private final ArrayList<ColorMapping> colorRules = new ArrayList<>();
     private final Map<Integer, Color> historyColors = new HashMap<>();
     private final Predicate<String> tagValidator;
     private final Runnable onChange;
+    private NeonmarkerStore store = NeonmarkerStore.NONE;
 
     private boolean arbitraryLayerEnabled = true;
     private boolean tagLayerEnabled = true;
@@ -48,6 +52,30 @@ class NeonmarkerColorService {
     NeonmarkerColorService(Predicate<String> tagValidator, Runnable onChange) {
         this.tagValidator = tagValidator;
         this.onChange = onChange;
+    }
+
+    void setStore(NeonmarkerStore store) {
+        this.store = store;
+    }
+
+    /** Replaces all state with the store's contents, without writing back. */
+    void reload() {
+        colorRules.clear();
+        colorRules.addAll(store.loadRules());
+        if (colorRules.isEmpty()) {
+            colorRules.add(new ColorMapping());
+        }
+        for (ColorMapping rule : colorRules) {
+            if (!getPalette().contains(rule.getColor())) {
+                addToPalette(rule.getColor());
+            }
+        }
+        historyColors.clear();
+        historyColors.putAll(store.loadHistoryColors());
+        Map<String, String> settings = store.loadSettings();
+        arbitraryLayerEnabled = !"false".equals(settings.get(SETTING_ARBITRARY_LAYER));
+        tagLayerEnabled = !"false".equals(settings.get(SETTING_TAG_LAYER));
+        onChange.run();
     }
 
     static List<Color> getPalette() {
@@ -96,6 +124,7 @@ class NeonmarkerColorService {
             return;
         }
         arbitraryLayerEnabled = enabled;
+        store.saveSetting(SETTING_ARBITRARY_LAYER, Boolean.toString(enabled));
         onChange.run();
     }
 
@@ -108,6 +137,7 @@ class NeonmarkerColorService {
             return;
         }
         tagLayerEnabled = enabled;
+        store.saveSetting(SETTING_TAG_LAYER, Boolean.toString(enabled));
         onChange.run();
     }
 
@@ -118,6 +148,7 @@ class NeonmarkerColorService {
         for (Integer historyId : historyIds) {
             historyColors.put(historyId, color);
         }
+        store.putHistoryColors(historyIds, color);
         onChange.run();
     }
 
@@ -132,24 +163,47 @@ class NeonmarkerColorService {
             }
         }
         if (removed) {
+            store.deleteHistoryColors(historyIds);
             onChange.run();
         }
     }
 
     /** Drops a history colour without notifying listeners (e.g. history row already gone). */
     void dropHistoryColor(int historyId) {
-        historyColors.remove(historyId);
+        if (historyColors.remove(historyId) != null) {
+            store.deleteHistoryColors(List.of(historyId));
+        }
+    }
+
+    void setRuleEnabled(ColorMapping rule, boolean enabled) {
+        rule.setEnabled(enabled);
+        store.saveRules(colorRules);
+    }
+
+    void setRuleColor(ColorMapping rule, Color color) {
+        rule.setColor(color);
+        store.saveRules(colorRules);
+    }
+
+    void setRuleTag(ColorMapping rule, String tag) {
+        rule.setTag(tag);
+        store.saveRules(colorRules);
+    }
+
+    private void rulesChanged() {
+        store.saveRules(colorRules);
+        onChange.run();
     }
 
     void addEmptyRule() {
         colorRules.add(new ColorMapping());
-        onChange.run();
+        rulesChanged();
     }
 
     void clearRules() {
         colorRules.clear();
         colorRules.add(new ColorMapping());
-        onChange.run();
+        rulesChanged();
     }
 
     void swapRules(int ruleIndex, boolean up) {
@@ -161,7 +215,7 @@ class NeonmarkerColorService {
             return;
         }
         Collections.swap(colorRules, ruleIndex, other);
-        onChange.run();
+        rulesChanged();
     }
 
     void moveRuleToTop(int ruleIndex) {
@@ -170,7 +224,7 @@ class NeonmarkerColorService {
         }
         ColorMapping rule = colorRules.remove(ruleIndex);
         colorRules.add(0, rule);
-        onChange.run();
+        rulesChanged();
     }
 
     void moveRuleToBottom(int ruleIndex) {
@@ -180,7 +234,7 @@ class NeonmarkerColorService {
         }
         ColorMapping rule = colorRules.remove(ruleIndex);
         colorRules.add(rule);
-        onChange.run();
+        rulesChanged();
     }
 
     void removeRule(int ruleIndex) {
@@ -191,7 +245,7 @@ class NeonmarkerColorService {
         if (colorRules.isEmpty()) {
             colorRules.add(new ColorMapping());
         }
-        onChange.run();
+        rulesChanged();
     }
 
     void removeRulesWithTags(Collection<String> tags) {
@@ -228,7 +282,7 @@ class NeonmarkerColorService {
         if (colorRules.isEmpty()) {
             colorRules.add(new ColorMapping());
         }
-        onChange.run();
+        rulesChanged();
     }
 
     boolean addColorMapping(String tag, int color) {
@@ -249,7 +303,7 @@ class NeonmarkerColorService {
         if (!getPalette().contains(newColor)) {
             addToPalette(newColor);
         }
-        onChange.run();
+        rulesChanged();
         return true;
     }
 

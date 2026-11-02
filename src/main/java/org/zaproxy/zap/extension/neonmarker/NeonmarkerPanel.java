@@ -75,6 +75,8 @@ class NeonmarkerPanel extends AbstractPanel {
     private NeonmarkerColorService colorService;
     private Container colorSelectionPanel;
     private ZapToggleButton enableButton;
+    private ZapToggleButton arbitraryLayerButton;
+    private ZapToggleButton tagLayerButton;
     private ExtensionHistory extHist;
 
     NeonmarkerPanel(Model model, NeonmarkerColorService colorService) {
@@ -157,7 +159,7 @@ class NeonmarkerPanel extends AbstractPanel {
         toolbar.add(enableButton);
         toolbar.add(new JSeparator(SwingConstants.VERTICAL));
 
-        ZapToggleButton arbitraryLayerButton =
+        arbitraryLayerButton =
                 new ZapToggleButton(
                         Constant.messages.getString(
                                 "neonmarker.panel.toolbar.layer.arbitrary.label"),
@@ -170,7 +172,7 @@ class NeonmarkerPanel extends AbstractPanel {
                                 event.getStateChange() == ItemEvent.SELECTED));
         toolbar.add(arbitraryLayerButton);
 
-        ZapToggleButton tagLayerButton =
+        tagLayerButton =
                 new ZapToggleButton(
                         Constant.messages.getString("neonmarker.panel.toolbar.layer.tags.label"),
                         colorService.isTagLayerEnabled());
@@ -197,6 +199,8 @@ class NeonmarkerPanel extends AbstractPanel {
     }
 
     protected void refreshDisplay() {
+        arbitraryLayerButton.setSelected(colorService.isArbitraryLayerEnabled());
+        tagLayerButton.setSelected(colorService.isTagLayerEnabled());
         colorSelectionPanel.removeAll();
         GridBagConstraints c = new GridBagConstraints();
         c.anchor = GridBagConstraints.LINE_START;
@@ -229,13 +233,13 @@ class NeonmarkerPanel extends AbstractPanel {
         repaintHistoryTable();
     }
 
-    private static Component getEnabledCheckBox(ColorMapping rule) {
+    private Component getEnabledCheckBox(ColorMapping rule) {
         JCheckBox enabled = new JCheckBox();
         enabled.setSelected(rule.isEnabled());
         enabled.setToolTipText(Constant.messages.getString("neonmarker.panel.mapping.enabled"));
         enabled.addItemListener(
                 event -> {
-                    rule.setEnabled(event.getStateChange() == ItemEvent.SELECTED);
+                    colorService.setRuleEnabled(rule, event.getStateChange() == ItemEvent.SELECTED);
                     repaintHistoryTable();
                 });
         return enabled;
@@ -311,7 +315,7 @@ class NeonmarkerPanel extends AbstractPanel {
                                             : NeonmarkerColorService.PLACEHOLDER);
                             return;
                         }
-                        rule.setColor(chosen);
+                        colorService.setRuleColor(rule, chosen);
                         if (!isOnPalette(chosen)) {
                             NeonmarkerColorService.addToPalette(chosen);
                             refreshDisplay();
@@ -319,7 +323,7 @@ class NeonmarkerPanel extends AbstractPanel {
                             repaintHistoryTable();
                         }
                     } else {
-                        rule.setColor((Color) colorSelect.getSelectedItem());
+                        colorService.setRuleColor(rule, (Color) colorSelect.getSelectedItem());
                         repaintHistoryTable();
                     }
                 });
@@ -363,7 +367,7 @@ class NeonmarkerPanel extends AbstractPanel {
                     if (refreshingTags.get()) {
                         return;
                     }
-                    rule.setTag((String) tagSelect.getSelectedItem());
+                    colorService.setRuleTag(rule, (String) tagSelect.getSelectedItem());
                     repaintHistoryTable();
                 });
         return tagSelect;

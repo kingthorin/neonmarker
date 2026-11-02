@@ -1,11 +1,13 @@
 import com.diffplug.spotless.extra.wtp.EclipseWtpFormatterStep
 import net.ltgt.gradle.errorprone.errorprone
+import org.gradle.process.ExecOperations
 import org.zaproxy.gradle.addon.AddOnStatus
 import org.zaproxy.gradle.addon.internal.model.GitHubUser
 import org.zaproxy.gradle.addon.internal.model.ProjectInfo
 import org.zaproxy.gradle.addon.internal.model.ReleaseState
 import org.zaproxy.gradle.addon.internal.tasks.GenerateReleaseStateLastCommit
 import org.zaproxy.gradle.addon.misc.ConvertMarkdownToHtml
+import javax.inject.Inject
 
 plugins {
     id("com.diffplug.spotless") version "6.25.0"
@@ -64,7 +66,7 @@ description = "Colors history table items based on tags"
 zapAddOn {
     addOnName.set("Neonmarker")
     addOnStatus.set(AddOnStatus.ALPHA)
-    zapVersion.set("2.16.0")
+    zapVersion.set("2.17.0")
 
     releaseLink.set("https://github.com/kingthorin/neonmarker/compare/v@PREVIOUS_VERSION@...v@CURRENT_VERSION@")
     unreleasedLink.set("https://github.com/kingthorin/neonmarker/compare/v@CURRENT_VERSION@...HEAD")
@@ -85,6 +87,9 @@ zapAddOn {
                 register("pscan") {
                     version.set(">=0.2.0")
                 }
+                register("database") {
+                    version.set(">=0.9.0 & < 1.0.0")
+                }
             }
         }
     }
@@ -96,7 +101,9 @@ zapAddOn {
 
 dependencies {
     compileOnly("org.zaproxy.addon:pscan:0.2.0")
+    compileOnly("org.zaproxy.addon:database:0.9.0")
 
+    testImplementation("org.zaproxy.addon:database:0.9.0")
     testImplementation("org.junit.jupiter:junit-jupiter:6.1.0")
 
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
@@ -104,6 +111,28 @@ dependencies {
 
 tasks.test {
     useJUnitPlatform()
+}
+
+interface InjectedExecOps {
+    @get:Inject val execOps: ExecOperations
+}
+
+// Mirrors zap-extensions' jdo-enhance plugin, which isn't published outside that repo.
+tasks.named<JavaCompile>("compileJava") {
+    val processResources = tasks.named<ProcessResources>("processResources")
+    dependsOn(processResources)
+    inputs.file("src/main/resources/META-INF/persistence.xml")
+    val injected = project.objects.newInstance<InjectedExecOps>()
+    val compileClasspath = classpath
+    val classesDir = destinationDirectory
+    val resourcesDir = processResources.map { it.destinationDir }
+    doLast {
+        injected.execOps.javaexec {
+            classpath(compileClasspath, classesDir, resourcesDir)
+            mainClass.set("org.datanucleus.enhancer.DataNucleusEnhancer")
+            args("-q", "-api", "JDO", "-pu", "neonmarker")
+        }
+    }
 }
 
 val projectInfo = ProjectInfo.from(project)

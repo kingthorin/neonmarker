@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Per-row arbitrary History colours (Set/Clear Color) without creating neon_* tags.
 - Layer toggles for arbitrary colours and tag rules; per-rule enable checkbox.
 - "To Top" and "To Bottom" buttons for rule precedence.
+- Arbitrary colours, tag rules, and layer toggles are saved with the ZAP session.
 
 ### Fixed
 - Tag combobox selection is retained when adding or reordering rules.
@@ -17,6 +18,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Highlighted rows use contrasting text for readability.
 - Maintenance changes.
 - "Un-Tag/Remove Color" renamed to "Remove Neon Tags".
+- Update minimum ZAP version to 2.17.0.
+- Now depends on the Database add-on.
 
 ## [1.8.0] - 2025-02-14
 ### Changed

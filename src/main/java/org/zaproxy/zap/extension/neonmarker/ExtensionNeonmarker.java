@@ -32,21 +32,27 @@ import org.jdesktop.swingx.decorator.AbstractHighlighter;
 import org.jdesktop.swingx.decorator.ComponentAdapter;
 import org.parosproxy.paros.Constant;
 import org.parosproxy.paros.control.Control;
+import org.parosproxy.paros.control.Control.Mode;
+import org.parosproxy.paros.db.Database;
 import org.parosproxy.paros.db.DatabaseException;
+import org.parosproxy.paros.db.DatabaseUnsupportedException;
 import org.parosproxy.paros.extension.Extension;
 import org.parosproxy.paros.extension.ExtensionAdaptor;
 import org.parosproxy.paros.extension.ExtensionHook;
 import org.parosproxy.paros.extension.OptionsChangedListener;
+import org.parosproxy.paros.extension.SessionChangedListener;
 import org.parosproxy.paros.extension.history.ExtensionHistory;
 import org.parosproxy.paros.model.HistoryReference;
 import org.parosproxy.paros.model.HistoryReferenceEventPublisher;
 import org.parosproxy.paros.model.OptionsParam;
+import org.parosproxy.paros.model.Session;
 import org.zaproxy.addon.pscan.ExtensionPassiveScan2;
 import org.zaproxy.zap.ZAP;
 import org.zaproxy.zap.eventBus.Event;
 import org.zaproxy.zap.eventBus.EventConsumer;
 import org.zaproxy.zap.extension.help.ExtensionHelp;
 import org.zaproxy.zap.utils.DisplayUtils;
+import org.zaproxy.zap.utils.ThreadUtils;
 import org.zaproxy.zap.view.table.HistoryReferencesTableModel;
 
 public class ExtensionNeonmarker extends ExtensionAdaptor implements EventConsumer {
@@ -65,6 +71,7 @@ public class ExtensionNeonmarker extends ExtensionAdaptor implements EventConsum
 
     private static ImageIcon icon;
     private NeonmarkerColorService colorService;
+    private TableJdo tableJdo;
     private NeonmarkerPanel neonmarkerPanel;
     private MarkItemColorHighlighter highlighter;
     private boolean highlighterEnabled;
@@ -95,6 +102,28 @@ public class ExtensionNeonmarker extends ExtensionAdaptor implements EventConsum
 
             extensionHook.getHookMenu().addPopupMenuItem(getMenuHistoryColor());
             extensionHook.addOptionsChangedListener(new OptionsChangedListenerImpl());
+        }
+        extensionHook.addSessionListener(new SessionChangedListenerImpl());
+
+        // Attach only after the panel exists: its constructor clears the rules.
+        colorService.setStore(new NeonmarkerDao());
+        colorService.reload();
+    }
+
+    @Override
+    public boolean supportsDb(String type) {
+        return true;
+    }
+
+    @Override
+    public void databaseOpen(Database db) throws DatabaseException, DatabaseUnsupportedException {
+        if (tableJdo != null) {
+            return;
+        }
+        try {
+            tableJdo = new TableJdo(db);
+        } catch (Exception e) {
+            LOGGER.warn(e.getMessage(), e);
         }
     }
 
@@ -162,6 +191,10 @@ public class ExtensionNeonmarker extends ExtensionAdaptor implements EventConsum
         toggleHighlighter(false);
         neonmarkerPanel = null;
         colorService = null;
+        if (tableJdo != null) {
+            tableJdo.unload();
+            tableJdo = null;
+        }
         super.unload();
     }
 
@@ -263,6 +296,22 @@ public class ExtensionNeonmarker extends ExtensionAdaptor implements EventConsum
         public void optionsChanged(OptionsParam optionsParam) {
             refreshColouringView();
         }
+    }
+
+    private class SessionChangedListenerImpl implements SessionChangedListener {
+        @Override
+        public void sessionChanged(Session session) {
+            ThreadUtils.invokeAndWaitHandled(colorService::reload);
+        }
+
+        @Override
+        public void sessionAboutToChange(Session session) {}
+
+        @Override
+        public void sessionScopeChanged(Session session) {}
+
+        @Override
+        public void sessionModeChanged(Mode mode) {}
     }
 
     private class MarkItemColorHighlighter extends AbstractHighlighter {

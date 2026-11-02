@@ -23,7 +23,10 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.awt.Color;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -388,6 +391,154 @@ class NeonmarkerColorServiceUnitTest {
         // Then
         assertEquals(0, changes.get());
         assertEquals(Color.RED, notifying.resolveColor(1, List.of()));
+    }
+
+    @Test
+    void shouldPersistRulesOnEveryRuleChange() {
+        // Given
+        RecordingStore store = new RecordingStore();
+        service.setStore(store);
+        // When
+        service.addColorMapping("A", Color.RED.getRGB());
+        service.addColorMapping("B", Color.BLUE.getRGB());
+        service.swapRules(1, true);
+        // Then
+        assertEquals(3, store.ruleSaves);
+        assertEquals("B", store.savedRules.get(0).getTag());
+    }
+
+    @Test
+    void shouldPersistRuleEnabledColorAndTagEdits() {
+        // Given
+        RecordingStore store = new RecordingStore();
+        service.addColorMapping("A", Color.RED.getRGB());
+        service.setStore(store);
+        ColorMapping rule = service.getColorRules().get(0);
+        // When
+        service.setRuleEnabled(rule, false);
+        service.setRuleColor(rule, Color.GREEN);
+        service.setRuleTag(rule, "B");
+        // Then
+        assertEquals(3, store.ruleSaves);
+        assertFalse(store.savedRules.get(0).isEnabled());
+        assertEquals(Color.GREEN, store.savedRules.get(0).getColor());
+        assertEquals("B", store.savedRules.get(0).getTag());
+    }
+
+    @Test
+    void shouldPersistHistoryColorSetClearAndDrop() {
+        // Given
+        RecordingStore store = new RecordingStore();
+        service.setStore(store);
+        // When
+        service.setHistoryColors(List.of(1, 2), Color.RED);
+        service.clearHistoryColors(List.of(1));
+        service.dropHistoryColor(2);
+        // Then
+        assertEquals(Map.of(), store.historyColors);
+        assertEquals(2, store.historyDeletes);
+    }
+
+    @Test
+    void shouldNotPersistDropOfUnknownHistoryColor() {
+        // Given
+        RecordingStore store = new RecordingStore();
+        service.setStore(store);
+        // When
+        service.dropHistoryColor(42);
+        // Then
+        assertEquals(0, store.historyDeletes);
+    }
+
+    @Test
+    void shouldPersistLayerSettings() {
+        // Given
+        RecordingStore store = new RecordingStore();
+        service.setStore(store);
+        // When
+        service.setArbitraryLayerEnabled(false);
+        service.setTagLayerEnabled(false);
+        // Then
+        assertEquals("false", store.settings.get(NeonmarkerColorService.SETTING_ARBITRARY_LAYER));
+        assertEquals("false", store.settings.get(NeonmarkerColorService.SETTING_TAG_LAYER));
+    }
+
+    @Test
+    void shouldReloadStateFromStore() {
+        // Given
+        RecordingStore store = new RecordingStore();
+        store.savedRules = List.of(new ColorMapping("Comment", Color.RED));
+        store.historyColors.put(5, Color.BLUE);
+        store.settings.put(NeonmarkerColorService.SETTING_TAG_LAYER, "false");
+        service.setHistoryColors(List.of(9), Color.GREEN);
+        service.setStore(store);
+        // When
+        service.reload();
+        // Then
+        assertEquals(1, service.getColorRules().size());
+        assertEquals("Comment", service.getColorRules().get(0).getTag());
+        assertEquals(Color.BLUE, service.resolveColor(5, List.of()));
+        assertNull(service.resolveColor(9, List.of()));
+        assertTrue(service.isArbitraryLayerEnabled());
+        assertFalse(service.isTagLayerEnabled());
+        assertEquals(0, store.ruleSaves);
+    }
+
+    @Test
+    void shouldReloadWithPlaceholderRuleWhenStoreEmpty() {
+        // Given
+        service.addColorMapping("A", Color.RED.getRGB());
+        service.setStore(new RecordingStore());
+        // When
+        service.reload();
+        // Then
+        assertEquals(1, service.getColorRules().size());
+        assertNull(service.getColorRules().get(0).getTag());
+    }
+
+    private static class RecordingStore implements NeonmarkerStore {
+        List<ColorMapping> savedRules = List.of();
+        int ruleSaves;
+        final Map<Integer, Color> historyColors = new HashMap<>();
+        int historyDeletes;
+        final Map<String, String> settings = new HashMap<>();
+
+        @Override
+        public List<ColorMapping> loadRules() {
+            return savedRules;
+        }
+
+        @Override
+        public Map<Integer, Color> loadHistoryColors() {
+            return historyColors;
+        }
+
+        @Override
+        public Map<String, String> loadSettings() {
+            return settings;
+        }
+
+        @Override
+        public void saveRules(List<ColorMapping> rules) {
+            savedRules = List.copyOf(rules);
+            ruleSaves++;
+        }
+
+        @Override
+        public void putHistoryColors(Collection<Integer> historyIds, Color color) {
+            historyIds.forEach(id -> historyColors.put(id, color));
+        }
+
+        @Override
+        public void deleteHistoryColors(Collection<Integer> historyIds) {
+            historyIds.forEach(historyColors::remove);
+            historyDeletes++;
+        }
+
+        @Override
+        public void saveSetting(String key, String value) {
+            settings.put(key, value);
+        }
     }
 
     @Test
